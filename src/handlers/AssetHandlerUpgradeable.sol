@@ -143,6 +143,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
         emit AssetDelisted(_ticker);
     }
 
+    // add on-chain token to the asset
     function linkToken(
         bytes32 _ticker,
         TokenInfo[] calldata _tokenInfos
@@ -156,6 +157,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
         emit LinkToken(_ticker, _tokenInfos);
     }
 
+    // delete all linked tokens
     function resetlinkedToken(bytes32 _ticker) public onlyRole(ENTRYPOINT_ROLE) {
         bytes32[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
@@ -165,6 +167,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
         emit ResetLinkedToken(_ticker);
     }
 
+    // switch token status
     function tokenSwitch(
         bytes32 _ticker,
         bytes32 _chainId,

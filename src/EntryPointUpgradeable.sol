@@ -19,7 +19,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
 
     uint256 public lastSubmissionTime;
     uint256 public constant FORCE_ROTATION_WINDOW = 1 minutes;
-    uint256 public constant MAX_OPT_COUNT = 1 hours;
+    uint256 public constant MAX_OPT_COUNT = 256;
 
     uint256 public tssNonce;
     address public tssSigner;
@@ -138,6 +138,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
      * @param _operations The batch tasks to be executed.
      * @param _signature The signature for verification.
      */
+    // TODO: pass in rsv instead of signature?
     function verifyAndCall(
         TaskOperation[] calldata _operations,
         bytes calldata _signature
@@ -148,21 +149,32 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
         Task memory task;
         for (uint8 i; i < _operations.length; ++i) {
             task = taskManager.getTask(_operations[i].taskId);
+            // execute task
             if (_operations[i].state == State.Completed) {
                 (success, result) = task.handler.call(task.result);
                 if (success) {
                     // success
-                    taskManager.updateTask(task.id, State.Completed, result);
+                    taskManager.updateTask(task.id, State.Completed, _operations[i].txHash, result);
                 } else {
                     // fail
-                    taskManager.updateTask(task.id, State.Failed, result);
+                    taskManager.updateTask(task.id, State.Failed, 0, result);
                 }
-            } else if (_operations[i].state == State.Pending) {
-                taskManager.updateTask(_operations[i].taskId, State.Pending, task.result);
-            } else if (_operations[i].state == State.Failed) {
+            }
+            // pending task
+            else if (_operations[i].state == State.Pending) {
+                taskManager.updateTask(
+                    _operations[i].taskId,
+                    State.Pending,
+                    _operations[i].txHash,
+                    task.result
+                );
+            }
+            // fail task
+            else if (_operations[i].state == State.Failed) {
                 taskManager.updateTask(
                     _operations[i].taskId,
                     State.Failed,
+                    0,
                     abi.encodePacked(uint8(0))
                 );
             }

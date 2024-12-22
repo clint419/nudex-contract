@@ -121,6 +121,8 @@ contract MockData is Script {
             CHAIN_ID,
             1 ether
         );
+        fundsHandler.setPauseState(TICKER, false);
+        fundsHandler.setPauseState(CHAIN_ID, false);
     }
 
     function accountData() public {

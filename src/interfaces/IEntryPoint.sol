@@ -6,6 +6,7 @@ import {State} from "./ITaskManager.sol";
 struct TaskOperation {
     uint64 taskId;
     State state;
+    bytes32 txHash;
 }
 
 contract IEntryPoint {

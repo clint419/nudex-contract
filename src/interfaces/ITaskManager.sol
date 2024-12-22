@@ -15,6 +15,7 @@ struct Task {
     address handler;
     uint32 createdAt;
     uint32 updatedAt;
+    bytes32 txHash;
     bytes result;
 }
 
@@ -25,6 +26,7 @@ interface ITaskManager {
         address indexed submitter,
         State indexed state,
         uint256 updateTime,
+        bytes32 txHash,
         bytes result
     );
 
@@ -45,5 +47,10 @@ interface ITaskManager {
 
     function submitTask(address _submitter, bytes calldata _context) external returns (uint64);
 
-    function updateTask(uint64 _taskId, State _state, bytes calldata _result) external;
+    function updateTask(
+        uint64 _taskId,
+        State _state,
+        bytes32 _txHash,
+        bytes calldata _result
+    ) external;
 }

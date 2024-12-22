@@ -85,6 +85,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             handler: msg.sender,
             createdAt: uint32(block.timestamp),
             updatedAt: uint32(0),
+            txHash: 0,
             result: _data
         });
         taskRecords[hash] = taskId;
@@ -102,6 +103,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     function updateTask(
         uint64 _taskId,
         State _state,
+        bytes32 _txHash,
         bytes calldata _result
     ) external onlyRole(ENTRYPOINT_ROLE) {
         Task storage task = tasks[_taskId];
@@ -110,9 +112,10 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         }
         task.state = _state;
         task.updatedAt = uint32(block.timestamp);
+        task.txHash = _txHash;
         if (_result.length > 0) {
             task.result = _result;
         }
-        emit TaskUpdated(_taskId, task.submitter, _state, block.timestamp, _result);
+        emit TaskUpdated(_taskId, task.submitter, _state, block.timestamp, _txHash, _result);
     }
 }
