@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {IAssetHandler, AssetParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
-import {ITaskManager} from "../interfaces/ITaskManager.sol";
+import {HandlerBase} from "./HandlerBase.sol";
 
-contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
-    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
+contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
-    bytes32 public constant SUBMITTER_ROLE = keccak256("SUBMITTER_ROLE");
-    ITaskManager public immutable taskManager;
 
     // Mapping from asset identifiers to their details
     bytes32[] public assetTickerList;
@@ -22,9 +18,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
         _;
     }
 
-    constructor(address _taskManager) {
-        taskManager = ITaskManager(_taskManager);
-    }
+    constructor(address _taskManager) HandlerBase(_taskManager) {}
 
     // _owner: EntryPoint contract
     function initialize(
@@ -32,9 +26,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, AccessControlUpgradeable {
         address _entryPoint,
         address _submitter
     ) public initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(ENTRYPOINT_ROLE, _entryPoint);
-        _grantRole(SUBMITTER_ROLE, _submitter);
+        __HandlerBase_init(_owner, _entryPoint, _submitter);
     }
 
     // Check if an asset is listed

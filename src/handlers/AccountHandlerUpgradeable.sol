@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {IAccountHandler} from "../interfaces/IAccountHandler.sol";
-import {ITaskManager} from "../interfaces/ITaskManager.sol";
+import {HandlerBase} from "./HandlerBase.sol";
 
-contract AccountHandlerUpgradeable is IAccountHandler, AccessControlUpgradeable {
-    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
-    bytes32 public constant SUBMITTER_ROLE = keccak256("SUBMITTER_ROLE");
-    ITaskManager public immutable taskManager;
-
+contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
     mapping(bytes => string) public addressRecord;
     mapping(string depositAddress => mapping(AddressCategory => uint256 account))
         public userMapping;
 
-    constructor(address _taskManager) {
-        taskManager = ITaskManager(_taskManager);
-    }
+    constructor(address _taskManager) HandlerBase(_taskManager) {}
 
     // _owner: EntryPoint contract
     function initialize(
@@ -24,9 +17,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, AccessControlUpgradeable 
         address _entryPoint,
         address _submitter
     ) public initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(ENTRYPOINT_ROLE, _entryPoint);
-        _grantRole(SUBMITTER_ROLE, _submitter);
+        __HandlerBase_init(_owner, _entryPoint, _submitter);
     }
 
     /**

@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {HandlerBase} from "./HandlerBase.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
 import {IFundsHandler} from "../interfaces/IFundsHandler.sol";
-import {ITaskManager} from "../interfaces/ITaskManager.sol";
 import {INIP20} from "../interfaces/INIP20.sol";
 
-contract FundsHandlerUpgradeable is IFundsHandler, AccessControlUpgradeable {
-    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
-    bytes32 public constant SUBMITTER_ROLE = keccak256("SUBMITTER_ROLE");
-    ITaskManager public immutable taskManager;
-    IAssetHandler private immutable assetHandler;
+contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
+    IAssetHandler public immutable assetHandler;
 
     mapping(bytes32 pauseType => bool isPaused) public pauseState;
     mapping(string userAddr => DepositInfo[]) public deposits;
     mapping(string userAddr => WithdrawalInfo[]) public withdrawals;
 
-    constructor(address _assetHandler, address _taskManager) {
+    constructor(address _assetHandler, address _taskManager) HandlerBase(_taskManager) {
         assetHandler = IAssetHandler(_assetHandler);
-        taskManager = ITaskManager(_taskManager);
     }
 
     // _owner: EntryPoint contract
@@ -28,9 +23,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, AccessControlUpgradeable {
         address _entryPoint,
         address _submitter
     ) public initializer {
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(ENTRYPOINT_ROLE, _entryPoint);
-        _grantRole(SUBMITTER_ROLE, _submitter);
+        __HandlerBase_init(_owner, _entryPoint, _submitter);
     }
 
     /**

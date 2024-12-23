@@ -191,7 +191,8 @@ contract FundsTest is BaseTest {
                     CHAIN_ID,
                     amounts[i]
                 ),
-                State.Pending
+                State.Pending,
+                0
             );
         }
         for (uint16 i; i < batchSize; ++i) {
@@ -352,7 +353,8 @@ contract FundsTest is BaseTest {
                     CHAIN_ID,
                     amounts[i]
                 ),
-                State.Pending
+                State.Pending,
+                0
             );
         }
         for (uint16 i; i < batchSize; ++i) {

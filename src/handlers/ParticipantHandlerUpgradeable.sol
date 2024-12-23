@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {HandlerBase} from "./HandlerBase.sol";
 import {IParticipantHandler} from "../interfaces/IParticipantHandler.sol";
 import {INuvoLock} from "../interfaces/INuvoLock.sol";
-import {ITaskManager} from "../interfaces/ITaskManager.sol";
 
-contract ParticipantHandlerUpgradeable is IParticipantHandler, AccessControlUpgradeable {
-    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
-    bytes32 public constant SUBMITTER_ROLE = keccak256("SUBMITTER_ROLE");
-    ITaskManager public immutable taskManager;
+contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     INuvoLock public immutable nuvoLock;
 
     address[] public participants;
     mapping(address => bool) public isParticipant;
 
-    constructor(address _nuvoLock, address _taskManager) {
+    constructor(address _nuvoLock, address _taskManager) HandlerBase(_taskManager) {
         nuvoLock = INuvoLock(_nuvoLock);
-        taskManager = ITaskManager(_taskManager);
     }
 
     // _owner: EntryPoint
@@ -32,9 +27,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, AccessControlUpgr
         for (uint256 i; i < _initialParticipants.length; ++i) {
             isParticipant[_initialParticipants[i]] = true;
         }
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(ENTRYPOINT_ROLE, _entryPoint);
-        _grantRole(SUBMITTER_ROLE, _submitter);
+        __HandlerBase_init(_owner, _entryPoint, _submitter);
     }
 
     /**
