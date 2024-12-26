@@ -7,7 +7,7 @@ struct TaskOperation {
     uint64 taskId;
     State state;
     bytes32 txHash;
-    bytes data;
+    bytes extraData;
 }
 
 contract IEntryPoint {

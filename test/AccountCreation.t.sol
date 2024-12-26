@@ -41,7 +41,7 @@ contract AccountCreationTest is BaseTest {
             IAccountHandler.AddressCategory.BTC,
             0
         );
-        taskOpts[0].data = offsetDepositString(depositAddress);
+        taskOpts[0].extraData = offsetDepositString(depositAddress);
         bytes memory signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -107,10 +107,9 @@ contract AccountCreationTest is BaseTest {
         );
         vm.stopPrank();
 
-        // TODO:
         // fail case: deposit address as address zero
-        vm.expectRevert(IAccountHandler.InvalidAddress.selector);
         vm.prank(vmProxy);
+        vm.expectRevert(IAccountHandler.InvalidAddress.selector);
         accountHandler.registerNewAddress(
             msgSender,
             DEFAULT_ACCOUNT,
