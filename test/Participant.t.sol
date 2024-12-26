@@ -55,8 +55,9 @@
 //     }
 
 //     function test_AddParticipant() public {
+//         vm.skip(true);
 //         vm.prank(msgSender);
-//         uint64 taskId = taskSubmitter.submitTask(_generateTaskContext());
+//         taskIds[0].taskId = taskSubmitter.submitTask(_generateTaskContext());
 //         // create an eligible user
 //         address newParticipant = makeAddr("newParticipant");
 //         // fail: did not stake
@@ -119,13 +120,14 @@
 //     }
 
 //     function test_RemoveParticipant() public {
+//         vm.skip(true);
 //         // add one valid partcipant
 //         address newParticipant = makeAddr("newParticipant");
 //         _addParticipant(newParticipant);
 
 //         // remove the added user
 //         vm.prank(msgSender);
-//         uint64 taskId = taskSubmitter.submitTask(_generateTaskContext());
+//         taskIds[0].taskId = taskSubmitter.submitTask(_generateTaskContext());
 //         bytes memory callData = abi.encodeWithSelector(
 //             IParticipantHandler.removeParticipant.selector,
 //             newParticipant
@@ -140,8 +142,9 @@
 //     }
 
 //     function test_RemoveParticipantRevert() public {
+//         vm.skip(true);
 //         vm.prank(msgSender);
-//         uint64 taskId = taskSubmitter.submitTask(_generateTaskContext());
+//         taskIds[0].taskId = taskSubmitter.submitTask(_generateTaskContext());
 //         // fail: cannot remove user when there is only 3 participant left
 //         bytes memory callData = abi.encodeWithSelector(
 //             IParticipantHandler.removeParticipant.selector,
@@ -177,26 +180,30 @@
 //     }
 
 //     function test_massAddAndRemove() public {
+//         vm.skip(true);
 //         uint8 initNumOfParticipant = 3;
-//         address[] memory newParticipants = new address[](20);
-//         for (uint8 i; i < 20; ++i) {
+//         uint8 batchSize = 20;
+//         TaskOperation[] memory taskOperations = new TaskOperation[](batchSize);
+//         address[] memory newParticipants = new address[](batchSize);
+//         for (uint8 i; i < batchSize; ++i) {
+//             taskOperations[i] = TaskOperation(
+//                 participantHandler.removeParticipant(newParticipants[i]),
+//                 State.Completed,
+//                 0
+//             );
 //             newParticipants[i] = _addParticipant(makeAddr(UintToString.uint256ToString(i)));
 //             assertEq(participantHandler.getParticipants().length, initNumOfParticipant + i + 1);
 //         }
-//         assertEq(participantHandler.getParticipants().length, 23);
-//         initNumOfParticipant = 23;
-//         uint64 taskId;
-//         bytes memory callData;
-//         Operation[] memory opts = new Operation[](20);
+//         initNumOfParticipant = initNumOfParticipant + batchSize;
+//         assertEq(participantHandler.getParticipants().length, initNumOfParticipant);
 //         vm.startPrank(msgSender);
-//         for (uint8 i; i < 20; ++i) {
+//         for (uint8 i; i < batchSize; ++i) {
 //             // removing a participant
-//             taskId = taskSubmitter.submitTask(_generateTaskContext());
-//             callData = abi.encodeWithSelector(
-//                 IParticipantHandler.removeParticipant.selector,
-//                 newParticipants[i]
+//             taskOperations[i] = TaskOperation(
+//                 participantHandler.removeParticipant(newParticipants[i]),
+//                 State.Completed,
+//                 0
 //             );
-//             opts[i] = Operation(participantHandlerProxy, State.Completed, taskId, callData);
 //         }
 //         vm.stopPrank();
 //         bytes memory signature = _generateOptSignature(opts, tssKey);
@@ -207,8 +214,9 @@
 //     }
 
 //     function _addParticipant(address _newParticipant) internal returns (address) {
+//         vm.skip(true);
 //         vm.prank(msgSender);
-//         uint64 taskId = taskSubmitter.submitTask(_generateTaskContext());
+//         taskIds[0].taskId = taskSubmitter.submitTask(_generateTaskContext());
 //         // create an eligible user
 //         nuvoToken.mint(_newParticipant, 100 ether);
 //         vm.startPrank(_newParticipant);

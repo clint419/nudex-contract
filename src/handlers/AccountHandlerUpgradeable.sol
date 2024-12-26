@@ -38,11 +38,9 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         address _userAddr,
         uint256 _account,
         AddressCategory _chain,
-        uint256 _index,
-        string calldata _address
+        uint256 _index
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
         require(_userAddr != address(0), InvalidUserAddress());
-        require(bytes(_address).length > 0, InvalidAddress());
         require(_account > 10000, InvalidAccountNumber(_account));
         require(
             bytes(addressRecord[abi.encodePacked(_account, _chain, _index)]).length == 0,
@@ -56,8 +54,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                     _userAddr,
                     _account,
                     _chain,
-                    _index,
-                    _address
+                    _index
                 )
             );
     }
@@ -77,6 +74,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         uint256 _index,
         string calldata _address
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        require(bytes(_address).length > 0, InvalidAddress());
         addressRecord[abi.encodePacked(_account, _chain, _index)] = _address;
         userMapping[_address][_chain] = _account;
         emit AddressRegistered(_userAddr, _account, _chain, _index, _address);

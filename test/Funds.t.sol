@@ -192,7 +192,8 @@ contract FundsTest is BaseTest {
                     amounts[i]
                 ),
                 State.Pending,
-                0
+                0,
+                ""
             );
         }
         for (uint16 i; i < batchSize; ++i) {
@@ -354,7 +355,8 @@ contract FundsTest is BaseTest {
                     amounts[i]
                 ),
                 State.Pending,
-                0
+                0,
+                ""
             );
         }
         for (uint16 i; i < batchSize; ++i) {

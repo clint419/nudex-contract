@@ -39,9 +39,9 @@ contract AccountCreationTest is BaseTest {
             msgSender,
             DEFAULT_ACCOUNT,
             IAccountHandler.AddressCategory.BTC,
-            0,
-            depositAddress
+            0
         );
+        taskOpts[0].data = offsetDepositString(depositAddress);
         bytes memory signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -78,8 +78,7 @@ contract AccountCreationTest is BaseTest {
             msgSender,
             DEFAULT_ACCOUNT,
             IAccountHandler.AddressCategory.BTC,
-            0,
-            depositAddress
+            0
         );
         vm.stopPrank();
     }
@@ -92,18 +91,7 @@ contract AccountCreationTest is BaseTest {
             address(0),
             DEFAULT_ACCOUNT,
             IAccountHandler.AddressCategory.BTC,
-            0,
-            depositAddress
-        );
-
-        // fail case: deposit address as address zero
-        vm.expectRevert(IAccountHandler.InvalidAddress.selector);
-        accountHandler.submitRegisterTask(
-            msgSender,
-            DEFAULT_ACCOUNT,
-            IAccountHandler.AddressCategory.BTC,
-            0,
-            ""
+            0
         );
 
         // fail case: account number less than 10000
@@ -115,10 +103,21 @@ contract AccountCreationTest is BaseTest {
             msgSender,
             invalidAccountNum,
             IAccountHandler.AddressCategory.BTC,
-            0,
-            depositAddress
+            0
         );
         vm.stopPrank();
+
+        // TODO:
+        // fail case: deposit address as address zero
+        vm.expectRevert(IAccountHandler.InvalidAddress.selector);
+        vm.prank(vmProxy);
+        accountHandler.registerNewAddress(
+            msgSender,
+            DEFAULT_ACCOUNT,
+            IAccountHandler.AddressCategory.BTC,
+            0,
+            ""
+        );
     }
 
     function testFuzz_SubmitTaskFuzz(
@@ -133,13 +132,19 @@ contract AccountCreationTest is BaseTest {
         IAccountHandler.AddressCategory chain = IAccountHandler.AddressCategory(_chain);
         vm.startPrank(msgSender);
         if (_account > 10000) {
-            accountHandler.submitRegisterTask(msgSender, _account, chain, _index, _address);
+            accountHandler.submitRegisterTask(msgSender, _account, chain, _index);
         } else {
             vm.expectRevert(
                 abi.encodeWithSelector(IAccountHandler.InvalidAccountNumber.selector, _account)
             );
-            accountHandler.submitRegisterTask(msgSender, _account, chain, _index, _address);
+            accountHandler.submitRegisterTask(msgSender, _account, chain, _index);
         }
         vm.stopPrank();
+    }
+
+    function offsetDepositString(string memory _address) internal pure returns (bytes memory) {
+        bytes memory depositAddrData = abi.encode(_address);
+        depositAddrData[31] = bytes1(uint8(160));
+        return depositAddrData;
     }
 }
