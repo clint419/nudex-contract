@@ -66,7 +66,7 @@ contract AssetsTest is BaseTest {
         assertEq(assetHandler.getAllAssets().length, 1);
         AssetParam memory assetParam = AssetParam(10, false, false, 0, 0, "Token02");
         taskOpts[0].taskId = assetHandler.submitListAssetTask(assetTicker, assetParam);
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
         assertEq(assetHandler.getAllAssets().length, 2);
 
@@ -148,7 +148,7 @@ contract AssetsTest is BaseTest {
     function test_ListAsset() public {
         vm.startPrank(msgSender);
         taskOpts[0].taskId = assetHandler.submitConsolidateTask(TICKER, CHAIN_ID, 1 ether);
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();
     }

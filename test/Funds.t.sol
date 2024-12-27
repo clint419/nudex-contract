@@ -80,7 +80,7 @@ contract FundsTest is BaseTest {
             chainId,
             depositAmount
         );
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
         emit IFundsHandler.DepositRecorded(depositAddress, TICKER, chainId, depositAmount);
@@ -202,7 +202,7 @@ contract FundsTest is BaseTest {
                 uint8(State.Created)
             );
         }
-        bytes memory signature = _generateOptSignature(taskOperations, tssKey);
+        signature = _generateOptSignature(taskOperations, tssKey);
         entryPoint.verifyAndCall(taskOperations, signature);
 
         for (uint16 i; i < batchSize; ++i) {
@@ -243,7 +243,7 @@ contract FundsTest is BaseTest {
             chainId,
             _amount
         );
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
 
         // check event and result
         vm.expectEmit(true, true, true, true);
@@ -279,7 +279,7 @@ contract FundsTest is BaseTest {
             chainId,
             withdrawAmount
         );
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
         emit IFundsHandler.WithdrawalRecorded(depositAddress, TICKER, chainId, withdrawAmount);
@@ -365,7 +365,7 @@ contract FundsTest is BaseTest {
                 uint8(State.Created)
             );
         }
-        bytes memory signature = _generateOptSignature(taskOperations, tssKey);
+        signature = _generateOptSignature(taskOperations, tssKey);
         entryPoint.verifyAndCall(taskOperations, signature);
         for (uint16 i; i < batchSize; ++i) {
             assertEq(

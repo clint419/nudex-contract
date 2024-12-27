@@ -40,6 +40,7 @@ contract BaseTest is Test {
 
     TaskOperation[] public taskOpts;
     address[] public handlers;
+    bytes public signature;
 
     function setUp() public virtual {
         msgSender = makeAddr("msgSender");

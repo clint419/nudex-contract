@@ -256,7 +256,7 @@
 //         );
 //         Operation[] memory opts = new Operation[](1);
 //         opts[0] = Operation(nuvoLockProxy, State.Completed, taskId, callData);
-//         bytes memory signature = _generateOptSignature(opts, tssKey);
+//         signature = _generateOptSignature(opts, tssKey);
 //         vm.expectEmit(true, true, true, true);
 //         emit INuvoLock.MinLockInfo(newLockAmount, newLockPeriod);
 //         entryPoint.verifyAndCall(opts, signature);
@@ -291,7 +291,7 @@
 //         );
 //         Operation[] memory opts = new Operation[](1);
 //         opts[0] = Operation(nuvoLockProxy, State.Completed, taskId, callData);
-//         bytes memory signature = _generateOptSignature(opts, tssKey);
+//         signature = _generateOptSignature(opts, tssKey);
 
 //         vm.expectEmit(true, true, true, true);
 //         emit INuvoLock.RewardPerPeriodUpdated(newRewardPerPeriod, lastPeriodNumber);
@@ -370,7 +370,7 @@
 //         );
 //         Operation[] memory opts = new Operation[](1);
 //         opts[0] = Operation(nuvoLockProxy, State.Completed, taskId, callData);
-//         bytes memory signature = _generateOptSignature(opts, tssKey);
+//         signature = _generateOptSignature(opts, tssKey);
 
 //         vm.prank(msgSender);
 //         vm.expectRevert(abi.encodeWithSelector(INuvoLock.NotAUser.selector, msgSender));

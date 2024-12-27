@@ -42,7 +42,7 @@ contract AccountCreationTest is BaseTest {
             0
         );
         taskOpts[0].extraData = offsetDepositString(depositAddress);
-        bytes memory signature = _generateOptSignature(taskOpts, tssKey);
+        signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
         // check mappings|reverseMapping
