@@ -51,6 +51,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokenList[_ticker];
     }
 
+    // Get the details of a linked token
     function getLinkedToken(
         bytes32 _ticker,
         bytes32 _chainId
@@ -58,6 +59,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokens[_ticker][_chainId];
     }
 
+    // Submit a task to list a new asset
     function submitListAssetTask(
         bytes32 _ticker,
         AssetParam calldata _assetParam
@@ -94,6 +96,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit AssetListed(_ticker, _assetParam);
     }
 
+    // Submit a task to update an existing asset
     function submitAssetTask(
         bytes32 _ticker,
         bytes calldata _callData
@@ -159,7 +162,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit ResetLinkedToken(_ticker);
     }
 
-    // switch token status
+    // switch token status to active or inactive
     function tokenSwitch(
         bytes32 _ticker,
         bytes32 _chainId,
@@ -169,6 +172,12 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit TokenSwitch(_ticker, _chainId, _isActive);
     }
 
+    /**
+     * @dev Submit a task to deposit the token
+     * @param _ticker The asset ticker
+     * @param _chainId The chain id
+     * @param _amount The amount to deposit
+     */
     function submitConsolidateTask(
         bytes32 _ticker,
         bytes32 _chainId,
@@ -181,6 +190,12 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             );
     }
 
+    /**
+     * @dev Consolidate the token
+     * @param _ticker The asset ticker
+     * @param _chainId The chain id
+     * @param _amount The amount to deposit
+     */
     function consolidate(
         bytes32 _ticker,
         bytes32 _chainId,
@@ -190,6 +205,12 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit Consolidate(_ticker, _chainId, _amount);
     }
 
+    /**
+     * @dev Subtract balance from the token
+     * @param _ticker The asset ticker
+     * @param _chainId The chain id
+     * @param _amount The amount to withdraw
+     */
     function withdraw(
         bytes32 _ticker,
         bytes32 _chainId,

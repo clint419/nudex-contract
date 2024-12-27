@@ -141,13 +141,25 @@ contract ParticipantTest is BaseTest {
         TaskOperation[] memory taskOperations = new TaskOperation[](batchSize);
         address[] memory newParticipants = new address[](batchSize);
         for (uint8 i; i < batchSize; ++i) {
-            newParticipants[i] = _addParticipant(makeAddr(UintToString.uint256ToString(i)));
+            // add a participant
+            newParticipants[i] = makeAddr(UintToString.uint256ToString(i));
+            _lockFor(newParticipants[i]);
+            taskOperations[i] = TaskOperation(
+                participantHandler.submitAddParticipantTask(newParticipants[i]),
+                State.Completed,
+                0,
+                ""
+            );
         }
+        signature = _generateOptSignature(taskOperations, tssKey);
+        nextSubmitter = entryPoint.nextSubmitter();
+        vm.prank(nextSubmitter);
+        entryPoint.verifyAndCall(taskOperations, signature);
         initNumOfParticipant = initNumOfParticipant + batchSize;
         assertEq(participantHandler.getParticipants().length, initNumOfParticipant);
         vm.startPrank(msgSender);
         for (uint8 i; i < batchSize; ++i) {
-            // removing a participant
+            // remove a participant
             taskOperations[i] = TaskOperation(
                 participantHandler.submitRemoveParticipantTask(newParticipants[i]),
                 State.Completed,
@@ -164,19 +176,22 @@ contract ParticipantTest is BaseTest {
     }
 
     function _addParticipant(address _newParticipant) internal returns (address) {
+        _lockFor(_newParticipant);
+        // add new user through entryPoint
+        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(_newParticipant);
+        signature = _generateOptSignature(taskOpts, tssKey);
+        vm.prank(entryPoint.nextSubmitter());
+        entryPoint.verifyAndCall(taskOpts, signature);
+        return _newParticipant;
+    }
+
+    // create an eligible user
+    function _lockFor(address _newParticipant) internal {
         vm.startPrank(_newParticipant);
-        // create an eligible user
         nuvoToken.mint(_newParticipant, 100 ether);
         nuvoToken.approve(address(nuvoLock), MIN_LOCK_AMOUNT);
         nuvoLock.lock(MIN_LOCK_AMOUNT, MIN_LOCK_PERIOD);
         vm.stopPrank();
         vm.prank(msgSender);
-        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(_newParticipant);
-
-        // add new user through entryPoint
-        signature = _generateOptSignature(taskOpts, tssKey);
-        vm.prank(entryPoint.nextSubmitter());
-        entryPoint.verifyAndCall(taskOpts, signature);
-        return _newParticipant;
     }
 }

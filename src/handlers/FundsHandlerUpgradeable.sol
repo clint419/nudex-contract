@@ -73,6 +73,15 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         emit NewPauseState(_condition, _newState);
     }
 
+    /**
+     * @dev Submit deposit task.
+     * @param _userAddress The EVM address of the user.
+     * @param _depositAddress The deposit address assigned to the user.
+     * @param _ticker The ticker of the asset.
+     * @param _chainId The chain id of the asset.
+     * @param _amount The amount to deposit.
+     */
+    // TODO: add contract address?
     function submitDepositTask(
         address _userAddress,
         string calldata _depositAddress,
@@ -120,6 +129,14 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         return abi.encodePacked(uint8(1), _depositAddress, _ticker, _chainId, _amount);
     }
 
+    /**
+     * @dev Submit withdraw task.
+     * @param _userAddress The EVM address of the user.
+     * @param _depositAddress The deposit address assigned to the user.
+     * @param _ticker The ticker of the asset.
+     * @param _chainId The chain id of the asset.
+     * @param _amount The amount to withdraw.
+     */
     function submitWithdrawTask(
         address _userAddress,
         string calldata _depositAddress,

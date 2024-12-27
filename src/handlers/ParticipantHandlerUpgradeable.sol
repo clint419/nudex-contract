@@ -55,6 +55,10 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         randParticipant = participants[randomIndex];
     }
 
+    /**
+     * @dev Submit task to add new participant.
+     * @param _newParticipant The new participant to be added.
+     */
     function submitAddParticipantTask(
         address _newParticipant
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
@@ -81,6 +85,10 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         return abi.encodePacked(uint8(1), _newParticipant);
     }
 
+    /**
+     * @dev Submit task to remove participant.
+     * @param _participant The participant to be removed.
+     */
     function submitRemoveParticipantTask(
         address _participant
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
@@ -113,6 +121,10 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         return abi.encodePacked(uint8(1), _participant);
     }
 
+    /**
+     * @dev Submit task to reset the whole participants.
+     * @param _newParticipants The new participant list.
+     */
     function submitResetParticipantsTask(
         address[] calldata _newParticipants
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
