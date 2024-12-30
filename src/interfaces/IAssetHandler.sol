@@ -10,6 +10,13 @@ struct AssetParam {
     string assetAlias; // Common name of the asset
 }
 
+struct ConsolidateTaskParam {
+    string[] fromAddr;
+    bytes32 ticker;
+    bytes32 chainId;
+    uint256 amount;
+}
+
 struct NudexAsset {
     uint32 listIndex;
     uint8 decimals;
@@ -30,7 +37,7 @@ struct TokenInfo {
     string contractAddress; // Address for ERC20, Inscription, or 0x0 for BTC/Ordinal/Native token
     string symbol;
     uint256 withdrawFee;
-    uint256 balance; // The balance of deposited token
+    // uint256 balance; // TODO: do we need to store balance?
 }
 
 interface IAssetHandler {
@@ -41,11 +48,16 @@ interface IAssetHandler {
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, bytes32 indexed chainId, bool isActive);
-    event Consolidate(bytes32 indexed ticker, bytes32 indexed chainId, uint256 amount);
+    event Consolidate(
+        bytes32 indexed ticker,
+        bytes32 indexed chainId,
+        uint256 amount,
+        string[] fromAddr
+    );
     event Withdraw(bytes32 indexed ticker, bytes32 indexed chainId, uint256 amount);
 
     // errors
-    error InsufficientBalance(bytes32 ticker, bytes32 chainId);
+    // error InsufficientBalance(bytes32 ticker, bytes32 chainId);
     error AssetNotListed(bytes32 ticker);
 
     // Check if an asset is listed

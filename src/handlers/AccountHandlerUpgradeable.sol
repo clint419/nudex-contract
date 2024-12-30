@@ -27,18 +27,18 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
      * @param _index The index of adress.
      */
     function getAddressRecord(
-        uint256 _account,
+        uint32 _account,
         AddressCategory _chain,
-        uint256 _index
+        uint32 _index
     ) external view returns (string memory) {
         return addressRecord[abi.encodePacked(_account, _chain, _index)];
     }
 
     function submitRegisterTask(
         address _userAddr,
-        uint256 _account,
+        uint32 _account,
         AddressCategory _chain,
-        uint256 _index
+        uint32 _index
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
         require(_userAddr != address(0), InvalidUserAddress());
         require(_account > 10000, InvalidAccountNumber(_account));
@@ -69,9 +69,9 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
      */
     function registerNewAddress(
         address _userAddr,
-        uint256 _account,
+        uint32 _account,
         AddressCategory _chain,
-        uint256 _index,
+        uint32 _index,
         string calldata _address
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(bytes(_address).length > 0, InvalidAddress());

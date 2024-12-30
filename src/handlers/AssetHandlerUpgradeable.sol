@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IAssetHandler, AssetParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
@@ -173,36 +173,36 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     /**
-     * @dev Submit a task to deposit the token
-     * @param _ticker The asset ticker
-     * @param _chainId The chain id
-     * @param _amount The amount to deposit
+     * @dev Submit a task to consolidate the asset
+     * @param _params The task parameters
+     * address[] fromAddr The addresses to consolidate from
+     * bytes32 ticker The asset ticker
+     * bytes32 chainId The chain id
+     * uint256 amount The amount to deposit
      */
     function submitConsolidateTask(
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
-    ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64) {
-        return
+        ConsolidateTaskParam[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) {
+        for (uint8 i; i < _params.length; i++) {
+            require(
+                _params[i].amount > nudexAssets[_params[i].ticker].minDepositAmount,
+                "Below minimum amount"
+            );
             taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.consolidate.selector, _ticker, _chainId, _amount)
+                abi.encodeWithSelector(this.consolidate.selector, _params[i])
             );
+        }
     }
 
     /**
      * @dev Consolidate the token
-     * @param _ticker The asset ticker
-     * @param _chainId The chain id
-     * @param _amount The amount to deposit
      */
     function consolidate(
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
-    ) external onlyRole(ENTRYPOINT_ROLE) {
-        linkedTokens[_ticker][_chainId].balance += _amount;
-        emit Consolidate(_ticker, _chainId, _amount);
+        ConsolidateTaskParam calldata _param
+    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
+        // linkedTokens[_ticker][_chainId].balance += _amount;
+        emit Consolidate(_param.ticker, _param.chainId, _param.amount, _param.fromAddr);
     }
 
     /**
@@ -217,11 +217,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         uint256 _amount
     ) external onlyRole(FUNDS_ROLE) checkListing(_ticker) {
         require(linkedTokens[_ticker][_chainId].isActive, "Inactive token");
-        require(
-            linkedTokens[_ticker][_chainId].balance >= _amount,
-            InsufficientBalance(_ticker, _chainId)
-        );
-        linkedTokens[_ticker][_chainId].balance -= _amount;
+        // require(
+        //     linkedTokens[_ticker][_chainId].balance >= _amount,
+        //     InsufficientBalance(_ticker, _chainId)
+        // );
+        // linkedTokens[_ticker][_chainId].balance -= _amount;
         emit Withdraw(_ticker, _chainId, _amount);
     }
 }

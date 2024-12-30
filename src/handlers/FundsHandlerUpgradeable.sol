@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {HandlerBase} from "./HandlerBase.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
-import {IFundsHandler} from "../interfaces/IFundsHandler.sol";
+import {IFundsHandler, DepositTaskParam, WithdrawTaskParam} from "../interfaces/IFundsHandler.sol";
 import {INIP20} from "../interfaces/INIP20.sol";
 
 contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
@@ -75,114 +75,111 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
 
     /**
      * @dev Submit deposit task.
-     * @param _userAddress The EVM address of the user.
-     * @param _depositAddress The deposit address assigned to the user.
-     * @param _ticker The ticker of the asset.
-     * @param _chainId The chain id of the asset.
-     * @param _amount The amount to deposit.
+     * @param _params The task parameters.
+     * userAddress The EVM address of the user.
+     * depositAddress The deposit address assigned to the user.
+     * ticker The ticker of the asset.
+     * chainId The chain id of the asset.
+     * amount The amount to deposit.
      */
-    // TODO: add contract address?
     function submitDepositTask(
-        address _userAddress,
-        string calldata _depositAddress,
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
-        require(!pauseState[_ticker] && !pauseState[bytes32(_chainId)], Paused());
-        require(_amount >= assetHandler.getAssetDetails(_ticker).minDepositAmount, InvalidAmount());
-        require(bytes(_depositAddress).length > 0, InvalidAddress());
-        return
+        DepositTaskParam[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) {
+        for (uint8 i; i < _params.length; i++) {
+            require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
+            require(
+                _params[i].amount >=
+                    assetHandler.getAssetDetails(_params[i].ticker).minDepositAmount,
+                InvalidAmount()
+            );
+            require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
             taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.recordDeposit.selector,
-                    _userAddress,
-                    _depositAddress,
-                    _ticker,
-                    _chainId,
-                    _amount
-                )
+                abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
+        }
     }
 
     /**
      * @dev Record deposit info.
      */
     function recordDeposit(
-        address _userAddress,
-        string calldata _depositAddress,
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
+        DepositTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
-        deposits[_depositAddress].push(
+        deposits[_param.depositAddress].push(
             DepositInfo({
-                depositAddress: _depositAddress,
-                ticker: _ticker,
-                chainId: _chainId,
-                amount: _amount
+                depositAddress: _param.depositAddress,
+                ticker: _param.ticker,
+                chainId: _param.chainId,
+                amount: _param.amount
             })
         );
-        emit INIP20.NIP20TokenEvent_mintb(_userAddress, _ticker, _amount);
-        emit DepositRecorded(_depositAddress, _ticker, _chainId, _amount);
-        return abi.encodePacked(uint8(1), _depositAddress, _ticker, _chainId, _amount);
+        emit INIP20.NIP20TokenEvent_mintb(_param.userAddress, _param.ticker, _param.amount);
+        emit DepositRecorded(
+            _param.depositAddress,
+            _param.ticker,
+            _param.chainId,
+            _param.amount,
+            _param.txHash,
+            _param.blockHeight,
+            _param.logIndex
+        );
+        return abi.encode(uint8(1), _param);
     }
 
     /**
      * @dev Submit withdraw task.
-     * @param _userAddress The EVM address of the user.
-     * @param _depositAddress The deposit address assigned to the user.
-     * @param _ticker The ticker of the asset.
-     * @param _chainId The chain id of the asset.
-     * @param _amount The amount to withdraw.
+     * @param _params The task parameters.
+     * userAddress The EVM address of the user.
+     * depositAddress The deposit address assigned to the user.
+     * ticker The ticker of the asset.
+     * chainId The chain id of the asset.
+     * amount The amount to deposit.
      */
     function submitWithdrawTask(
-        address _userAddress,
-        string calldata _depositAddress,
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
-        require(!pauseState[_ticker] && !pauseState[bytes32(_chainId)], Paused());
-        require(bytes(_depositAddress).length > 0, InvalidAddress());
-        require(
-            _amount >= assetHandler.getAssetDetails(_ticker).minWithdrawAmount,
-            InvalidAmount()
-        );
-        emit INIP20.NIP20TokenEvent_burnb(_userAddress, _ticker, _amount);
-        return
+        WithdrawTaskParam[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) {
+        for (uint8 i; i < _params.length; i++) {
+            require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
+            require(
+                _params[i].amount >=
+                    assetHandler.getAssetDetails(_params[i].ticker).minWithdrawAmount,
+                InvalidAmount()
+            );
+            require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
+            emit INIP20.NIP20TokenEvent_burnb(
+                _params[i].userAddress,
+                _params[i].ticker,
+                _params[i].amount
+            );
             taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.recordWithdrawal.selector,
-                    _depositAddress,
-                    _ticker,
-                    _chainId,
-                    _amount
-                )
+                abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i])
             );
+        }
     }
 
     /**
      * @dev Record withdraw info.
      */
     function recordWithdrawal(
-        string calldata _depositAddress,
-        bytes32 _ticker,
-        bytes32 _chainId,
-        uint256 _amount
+        WithdrawTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
-        withdrawals[_depositAddress].push(
+        withdrawals[_param.depositAddress].push(
             WithdrawalInfo({
-                depositAddress: _depositAddress,
-                ticker: _ticker,
-                chainId: _chainId,
-                amount: _amount
+                depositAddress: _param.depositAddress,
+                ticker: _param.ticker,
+                chainId: _param.chainId,
+                amount: _param.amount
             })
         );
-        assetHandler.withdraw(_ticker, _chainId, _amount);
-        emit WithdrawalRecorded(_depositAddress, _ticker, _chainId, _amount);
-        return abi.encodePacked(uint8(1), _depositAddress, _ticker, _chainId, _amount);
+        assetHandler.withdraw(_param.ticker, _param.chainId, _param.amount);
+        emit WithdrawalRecorded(
+            _param.depositAddress,
+            _param.ticker,
+            _param.chainId,
+            _param.amount
+        );
+        return abi.encode(uint8(1), _param);
     }
 }

@@ -32,16 +32,16 @@ interface IAccountHandler {
     ) external view returns (uint256);
 
     function getAddressRecord(
-        uint256 _account,
+        uint32 _account,
         AddressCategory _chain,
-        uint256 _index
+        uint32 _index
     ) external view returns (string memory);
 
     function registerNewAddress(
         address _userAddr,
-        uint _account,
+        uint32 _account,
         AddressCategory _chain,
-        uint _index,
+        uint32 _index,
         string calldata _address
     ) external returns (bytes memory);
 }
