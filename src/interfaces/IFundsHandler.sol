@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-struct DepositTaskParam {
+struct DepositInfo {
     address userAddress;
     string depositAddress;
     bytes32 ticker;
@@ -12,31 +12,21 @@ struct DepositTaskParam {
     uint256 logIndex;
 }
 
-struct WithdrawTaskParam {
+struct WithdrawalInfo {
     address userAddress;
     string depositAddress;
     bytes32 ticker;
     bytes32 chainId;
     uint256 amount;
+    bytes32 txHash;
+    uint256 blockHeight;
+    uint256 logIndex;
 }
 
 interface IFundsHandler {
-    struct DepositInfo {
-        string depositAddress;
-        bytes32 ticker;
-        bytes32 chainId;
-        uint256 amount;
-    }
-
-    struct WithdrawalInfo {
-        string depositAddress;
-        bytes32 ticker;
-        bytes32 chainId;
-        uint256 amount;
-    }
-
     event NewPauseState(bytes32 indexed condition, bool indexed newState);
     event DepositRecorded(
+        address indexed userAddress,
         string depositAddress,
         bytes32 indexed ticker,
         bytes32 indexed chainId,
@@ -46,10 +36,14 @@ interface IFundsHandler {
         uint256 logIndex
     );
     event WithdrawalRecorded(
+        address indexed userAddress,
         string depositAddress,
         bytes32 indexed ticker,
         bytes32 indexed chainId,
-        uint256 amount
+        uint256 amount,
+        bytes32 txHash,
+        uint256 blockHeight,
+        uint256 logIndex
     );
 
     error InvalidAmount();
@@ -57,9 +51,9 @@ interface IFundsHandler {
     error InvalidAddress();
     error Paused();
 
-    function recordDeposit(DepositTaskParam calldata _param) external returns (bytes memory);
+    function recordDeposit(DepositInfo calldata _param) external returns (bytes memory);
 
-    function recordWithdrawal(WithdrawTaskParam calldata _param) external returns (bytes memory);
+    function recordWithdrawal(WithdrawalInfo calldata _param) external returns (bytes memory);
 
     function getDeposits(
         string calldata depositAddress

@@ -24,7 +24,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
      * @dev Get registered address record.
      * @param _account Account number, must be greater than 10000.
      * @param _chain The chain type of the address.
-     * @param _index The index of adress.
+     * @param _index The index of address.
      */
     function getAddressRecord(
         uint32 _account,
@@ -34,6 +34,13 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         return addressRecord[abi.encodePacked(_account, _chain, _index)];
     }
 
+    /**
+     * @dev Submit a task to register new deposit address for user account.
+     * @param _userAddr The EVM address of the user.
+     * @param _account Account number, must be greater than 10000.
+     * @param _chain The chain type of the address.
+     * @param _index The index of address.
+     */
     function submitRegisterTask(
         address _userAddr,
         uint32 _account,
@@ -64,7 +71,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
      * @param _userAddr The EVM address of the user.
      * @param _account Account number, must be greater than 10000.
      * @param _chain The chain type of the address.
-     * @param _index The index of adress.
+     * @param _index The index of address.
      * @param _address The registering address.
      */
     function registerNewAddress(

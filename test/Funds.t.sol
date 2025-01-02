@@ -4,7 +4,7 @@ import "./BaseTest.sol";
 
 import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {FundsHandlerUpgradeable} from "../src/handlers/FundsHandlerUpgradeable.sol";
-import {IFundsHandler} from "../src/interfaces/IFundsHandler.sol";
+import {IFundsHandler, FundsTaskParam} from "../src/interfaces/IFundsHandler.sol";
 import {ITaskManager, State} from "../src/interfaces/ITaskManager.sol";
 
 contract FundsTest is BaseTest {
@@ -16,9 +16,10 @@ contract FundsTest is BaseTest {
 
     string public depositAddress;
 
+    address public dmProxy;
     FundsHandlerUpgradeable public fundsHandler;
 
-    address public dmProxy;
+    FundsTaskParam[] public depositTaskParams;
 
     function setUp() public override {
         super.setUp();
@@ -64,6 +65,11 @@ contract FundsTest is BaseTest {
         assetHandler.grantRole(FUNDS_ROLE, dmProxy);
         handlers.push(dmProxy);
         taskManager.initialize(daoContract, vmProxy, handlers);
+
+        // default task param
+        depositTaskParams.push(
+            FundsTaskParam(msgSender, depositAddress, TICKER, CHAIN_ID, 1 ether)
+        );
     }
 
     function test_Deposit() public {

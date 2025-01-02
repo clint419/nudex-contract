@@ -201,7 +201,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function consolidate(
         ConsolidateTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
-        // linkedTokens[_ticker][_chainId].balance += _amount;
         emit Consolidate(_param.ticker, _param.chainId, _param.amount, _param.fromAddr);
     }
 
@@ -217,11 +216,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         uint256 _amount
     ) external onlyRole(FUNDS_ROLE) checkListing(_ticker) {
         require(linkedTokens[_ticker][_chainId].isActive, "Inactive token");
-        // require(
-        //     linkedTokens[_ticker][_chainId].balance >= _amount,
-        //     InsufficientBalance(_ticker, _chainId)
-        // );
-        // linkedTokens[_ticker][_chainId].balance -= _amount;
         emit Withdraw(_ticker, _chainId, _amount);
     }
 }
