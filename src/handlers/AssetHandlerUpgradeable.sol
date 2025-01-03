@@ -201,6 +201,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function consolidate(
         ConsolidateTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
+        // TODO: record consolidate history
         emit Consolidate(_param.ticker, _param.chainId, _param.amount, _param.fromAddr);
     }
 

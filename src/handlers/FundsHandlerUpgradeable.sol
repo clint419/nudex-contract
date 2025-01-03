@@ -112,7 +112,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             _param.ticker,
             _param.chainId,
             _param.amount,
-            _param.txHash,
             _param.blockHeight,
             _param.logIndex
         );
@@ -164,10 +163,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             _param.depositAddress,
             _param.ticker,
             _param.chainId,
-            _param.amount,
-            _param.txHash,
-            _param.blockHeight,
-            _param.logIndex
+            _param.amount
         );
         return abi.encode(uint8(1), _param);
     }

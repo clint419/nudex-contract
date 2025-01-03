@@ -7,7 +7,6 @@ struct DepositInfo {
     bytes32 ticker;
     bytes32 chainId;
     uint256 amount;
-    bytes32 txHash;
     uint256 blockHeight;
     uint256 logIndex;
 }
@@ -18,9 +17,6 @@ struct WithdrawalInfo {
     bytes32 ticker;
     bytes32 chainId;
     uint256 amount;
-    bytes32 txHash;
-    uint256 blockHeight;
-    uint256 logIndex;
 }
 
 interface IFundsHandler {
@@ -31,7 +27,6 @@ interface IFundsHandler {
         bytes32 indexed ticker,
         bytes32 indexed chainId,
         uint256 amount,
-        bytes32 txHash,
         uint256 blockHeight,
         uint256 logIndex
     );
@@ -40,10 +35,7 @@ interface IFundsHandler {
         string depositAddress,
         bytes32 indexed ticker,
         bytes32 indexed chainId,
-        uint256 amount,
-        bytes32 txHash,
-        uint256 blockHeight,
-        uint256 logIndex
+        uint256 amount
     );
 
     error InvalidAmount();
