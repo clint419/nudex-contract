@@ -12,6 +12,8 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     mapping(bytes32 ticker => NudexAsset) public nudexAssets;
     mapping(bytes32 ticker => bytes32[] chainIds) public linkedTokenList;
     mapping(bytes32 ticker => mapping(bytes32 chainId => TokenInfo)) public linkedTokens;
+    mapping(bytes32 ticker => mapping(bytes32 chainId => ConsolidateTaskParam[]))
+        public consolidateHistory;
 
     modifier checkListing(bytes32 _ticker) {
         require(nudexAssets[_ticker].isListed, AssetNotListed(_ticker));
@@ -185,7 +187,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
             require(
-                _params[i].amount > nudexAssets[_params[i].ticker].minDepositAmount,
+                _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
                 "Below minimum amount"
             );
             taskManager.submitTask(
@@ -201,8 +203,8 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function consolidate(
         ConsolidateTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
-        // TODO: record consolidate history
-        emit Consolidate(_param.ticker, _param.chainId, _param.amount, _param.fromAddr);
+        consolidateHistory[_param.ticker][_param.chainId].push(_param);
+        emit Consolidate(_param.ticker, _param.chainId, _param.amount);
     }
 
     /**

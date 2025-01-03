@@ -6,7 +6,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {NuvoProxy, ITransparentUpgradeableProxy} from "../src/proxies/NuvoProxy.sol";
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
-import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
+import {AssetHandlerUpgradeable, AssetParam, TokenInfo, ConsolidateTaskParam} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {FundsHandlerUpgradeable, DepositInfo, WithdrawalInfo} from "../src/handlers/FundsHandlerUpgradeable.sol";
 import {TaskManagerUpgradeable, State} from "../src/TaskManagerUpgradeable.sol";
 import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
@@ -69,13 +69,14 @@ contract MockData is Script {
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
+        assetData();
         accountData();
         fundsData();
         updateTask();
         vm.stopBroadcast();
     }
 
-    function fundsData() public {
+    function assetData() public {
         // asset
         AssetParam memory assetParam = AssetParam(18, true, true, 1 ether, 1 ether, "Token_Alias");
         assetHandler.submitListAssetTask(TICKER, assetParam);
@@ -88,9 +89,24 @@ contract MockData is Script {
         );
         assetHandler.linkToken(TICKER, testTokenInfo);
 
+        // consolidate
+        ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
+        consolidateTaskParams[0] = ConsolidateTaskParam(TICKER, CHAIN_ID, 1 ether);
+        consolidateTaskParams[1] = ConsolidateTaskParam(TICKER, CHAIN_ID, 2.5 ether);
+        consolidateTaskParams[2] = ConsolidateTaskParam(TICKER, CHAIN_ID, 3.3 ether);
+        assetHandler.submitConsolidateTask(consolidateTaskParams);
+        assetHandler.consolidate(consolidateTaskParams[0]);
+        assetHandler.consolidate(consolidateTaskParams[1]);
+        assetHandler.consolidate(consolidateTaskParams[2]);
+
+        assetHandler.tokenSwitch(TICKER, CHAIN_ID, false);
+        assetHandler.tokenSwitch(TICKER, CHAIN_ID, true);
+    }
+
+    function fundsData() public {
         // deposit
         DepositInfo[] memory depositInfos = new DepositInfo[](1);
-        DepositInfo memory depositInfo = DepositInfo(
+        depositInfos[0] = DepositInfo(
             deployer,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             TICKER,
@@ -99,23 +115,21 @@ contract MockData is Script {
             0,
             0
         );
-        depositInfos[0] = depositInfo;
         fundsHandler.submitDepositTask(depositInfos);
-        fundsHandler.recordDeposit(depositInfo);
+        fundsHandler.recordDeposit(depositInfos[0]);
 
         // withdraw
         WithdrawalInfo[] memory withdrawalInfos = new WithdrawalInfo[](1);
-        WithdrawalInfo memory withdrawalInfo = WithdrawalInfo(
+        withdrawalInfos[0] = WithdrawalInfo(
             deployer,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             TICKER,
             CHAIN_ID,
             1 ether
         );
-        withdrawalInfos[0] = withdrawalInfo;
 
         fundsHandler.submitWithdrawTask(withdrawalInfos);
-        fundsHandler.recordWithdrawal(withdrawalInfo);
+        fundsHandler.recordWithdrawal(withdrawalInfos[0]);
         fundsHandler.setPauseState(TICKER, false);
         fundsHandler.setPauseState(CHAIN_ID, false);
     }
