@@ -7,8 +7,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {NuvoProxy, ITransparentUpgradeableProxy} from "../src/proxies/NuvoProxy.sol";
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
 import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {FundsHandlerUpgradeable} from "../src/handlers/FundsHandlerUpgradeable.sol";
-import {TaskManagerUpgradeable} from "../src/TaskManagerUpgradeable.sol";
+import {FundsHandlerUpgradeable, DepositInfo, WithdrawalInfo} from "../src/handlers/FundsHandlerUpgradeable.sol";
+import {TaskManagerUpgradeable, State} from "../src/TaskManagerUpgradeable.sol";
 import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
 
 // this contract is only used for contract testing
@@ -20,6 +20,7 @@ contract MockData is Script {
     uint256 public deployerPrivateKey;
     address public deployer;
 
+    TaskManagerUpgradeable taskManager;
     AccountHandlerUpgradeable accountManager;
     AssetHandlerUpgradeable assetHandler;
     FundsHandlerUpgradeable fundsHandler;
@@ -32,28 +33,29 @@ contract MockData is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        TaskManagerUpgradeable taskManager = new TaskManagerUpgradeable();
+        taskManager = new TaskManagerUpgradeable();
+        console.log("|TaskManager|", address(taskManager));
 
         // deploy accountManager
         accountManager = new AccountHandlerUpgradeable(address(taskManager));
-        NuvoProxy proxy = new NuvoProxy(address(accountManager), vm.envAddress("PARTICIPANT_2"));
-        accountManager = AccountHandlerUpgradeable(address(proxy));
+        // NuvoProxy proxy = new NuvoProxy(address(accountManager), vm.envAddress("PARTICIPANT_2"));
+        // accountManager = AccountHandlerUpgradeable(address(proxy));
         accountManager.initialize(deployer, deployer, deployer);
         handlers.push(address(accountManager));
         console.log("|AccountHandler|", address(accountManager));
 
         // deploy assetHandler
         assetHandler = new AssetHandlerUpgradeable(address(taskManager));
-        proxy = new NuvoProxy(address(assetHandler), vm.envAddress("PARTICIPANT_2"));
-        assetHandler = AssetHandlerUpgradeable(address(proxy));
+        // proxy = new NuvoProxy(address(assetHandler), vm.envAddress("PARTICIPANT_2"));
+        // assetHandler = AssetHandlerUpgradeable(address(proxy));
         assetHandler.initialize(deployer, deployer, deployer);
         handlers.push(address(assetHandler));
         console.log("|AssetHandlerUpgradeable|", address(assetHandler));
 
         // deploy fundsHandler
         fundsHandler = new FundsHandlerUpgradeable(address(assetHandler), address(taskManager));
-        proxy = new NuvoProxy(address(fundsHandler), vm.envAddress("PARTICIPANT_2"));
-        fundsHandler = FundsHandlerUpgradeable(address(proxy));
+        // proxy = new NuvoProxy(address(fundsHandler), vm.envAddress("PARTICIPANT_2"));
+        // fundsHandler = FundsHandlerUpgradeable(address(proxy));
         fundsHandler.initialize(deployer, deployer, deployer);
         handlers.push(address(fundsHandler));
         assetHandler.grantRole(FUNDS_ROLE, address(fundsHandler));
@@ -69,6 +71,7 @@ contract MockData is Script {
         vm.startBroadcast(deployerPrivateKey);
         accountData();
         fundsData();
+        updateTask();
         vm.stopBroadcast();
     }
 
@@ -78,49 +81,41 @@ contract MockData is Script {
         assetHandler.submitListAssetTask(TICKER, assetParam);
         assetHandler.listNewAsset(TICKER, assetParam);
         TokenInfo[] memory testTokenInfo = new TokenInfo[](1);
-        testTokenInfo[0] = TokenInfo(
-            CHAIN_ID,
-            true,
-            uint8(18),
-            "0xContractAddress",
-            "SYMBOL",
-            0,
-            100 ether
-        );
+        testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
         assetHandler.submitAssetTask(
             TICKER,
             abi.encodeWithSelector(assetHandler.linkToken.selector, TICKER, testTokenInfo)
         );
         assetHandler.linkToken(TICKER, testTokenInfo);
 
-        // deposit/withdraw
-        fundsHandler.submitDepositTask(
+        // deposit
+        DepositInfo[] memory depositInfos = new DepositInfo[](1);
+        DepositInfo memory depositInfo = DepositInfo(
+            deployer,
+            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            0,
+            0
+        );
+        depositInfos[0] = depositInfo;
+        fundsHandler.submitDepositTask(depositInfos);
+        fundsHandler.recordDeposit(depositInfo);
+
+        // withdraw
+        WithdrawalInfo[] memory withdrawalInfos = new WithdrawalInfo[](1);
+        WithdrawalInfo memory withdrawalInfo = WithdrawalInfo(
             deployer,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             TICKER,
             CHAIN_ID,
             1 ether
         );
-        fundsHandler.recordDeposit(
-            deployer,
-            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            TICKER,
-            CHAIN_ID,
-            1 ether
-        );
-        fundsHandler.submitWithdrawTask(
-            deployer,
-            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            TICKER,
-            CHAIN_ID,
-            1 ether
-        );
-        fundsHandler.recordWithdrawal(
-            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            TICKER,
-            CHAIN_ID,
-            1 ether
-        );
+        withdrawalInfos[0] = withdrawalInfo;
+
+        fundsHandler.submitWithdrawTask(withdrawalInfos);
+        fundsHandler.recordWithdrawal(withdrawalInfo);
         fundsHandler.setPauseState(TICKER, false);
         fundsHandler.setPauseState(CHAIN_ID, false);
     }
@@ -179,5 +174,11 @@ contract MockData is Script {
             2,
             "8ymc6niJiF4imco29UU3z7mK11sCt9NdL3LjG3VkEYAC"
         );
+    }
+
+    function updateTask() public {
+        taskManager.updateTask(0, State.Completed, keccak256("TxHash1"), bytes("0x01"));
+        taskManager.updateTask(1, State.Pending, keccak256("TxHash2"), bytes("0x02"));
+        taskManager.updateTask(2, State.Failed, keccak256("TxHash3"), bytes("0x03"));
     }
 }
