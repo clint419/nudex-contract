@@ -70,6 +70,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
+                "",
                 abi.encodeWithSelector(this.listNewAsset.selector, _ticker, _assetParam)
             );
     }
@@ -103,7 +104,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         bytes calldata _callData
     ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64) {
-        return taskManager.submitTask(msg.sender, _callData);
+        return taskManager.submitTask(msg.sender, "", _callData);
     }
 
     // Update listed asset
@@ -183,6 +184,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      * uint256 amount The amount to deposit
      */
     function submitConsolidateTask(
+        string[] calldata _txHash,
         ConsolidateTaskParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
@@ -192,6 +194,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             );
             taskManager.submitTask(
                 msg.sender,
+                _txHash[i],
                 abi.encodeWithSelector(this.consolidate.selector, _params[i])
             );
         }
@@ -204,7 +207,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         ConsolidateTaskParam calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
         consolidateHistory[_param.ticker][_param.chainId].push(_param);
-        emit Consolidate(_param.ticker, _param.chainId, _param.amount);
+        emit Consolidate(_param.ticker, _param.chainId, _param.fromAddress, _param.amount);
     }
 
     /**

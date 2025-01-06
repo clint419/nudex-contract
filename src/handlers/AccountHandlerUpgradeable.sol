@@ -5,6 +5,7 @@ import {IAccountHandler} from "../interfaces/IAccountHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
+    // TODO: use bytes32 for key
     mapping(bytes => string) public addressRecord;
     mapping(string depositAddress => mapping(AddressCategory => uint256 account))
         public userMapping;
@@ -31,6 +32,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         AddressCategory _chain,
         uint32 _index
     ) external view returns (string memory) {
+        // TODO: kecaak256 input
         return addressRecord[abi.encodePacked(_account, _chain, _index)];
     }
 
@@ -56,6 +58,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
+                "",
                 abi.encodeWithSelector(
                     this.registerNewAddress.selector,
                     _userAddr,

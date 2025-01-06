@@ -135,10 +135,10 @@ contract MockData is Script {
     }
 
     function accountData() public {
-        for (uint8 i; i < 10; ++i) {
+        for (uint8 i; i < 5; ++i) {
             accountManager.registerNewAddress(
                 deployer,
-                10001,
+                10001 + i,
                 IAccountHandler.AddressCategory.EVM,
                 i,
                 Strings.toHexString(makeAddr(Strings.toString(i)))
@@ -147,7 +147,7 @@ contract MockData is Script {
 
         accountManager.registerNewAddress(
             deployer,
-            10002,
+            10001,
             IAccountHandler.AddressCategory.BTC,
             0,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR"
@@ -161,7 +161,7 @@ contract MockData is Script {
         );
         accountManager.registerNewAddress(
             deployer,
-            10002,
+            10003,
             IAccountHandler.AddressCategory.BTC,
             2,
             "1PS21zbYxJZUzsHg91MfxUDbqkn7BEw2C5"
@@ -169,14 +169,14 @@ contract MockData is Script {
 
         accountManager.registerNewAddress(
             deployer,
-            10003,
+            10001,
             IAccountHandler.AddressCategory.SOL,
             0,
             "w9A6215VdjCgX9BVwK1ZXE7sKBuNGh7bdmeGBEs7625"
         );
         accountManager.registerNewAddress(
             deployer,
-            10003,
+            10002,
             IAccountHandler.AddressCategory.SOL,
             1,
             "4WMARsRWo8x7oJRwTQ9LhbDuiAnzz5TF3WzpTCgACrfe"

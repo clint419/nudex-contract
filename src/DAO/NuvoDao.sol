@@ -46,15 +46,6 @@ contract NuvoDao is
         return true;
     }
 
-    // function propose(
-    //     address[] memory targets,
-    //     uint256[] memory values,
-    //     bytes[] memory calldatas,
-    //     string memory description
-    // ) public override returns (uint256) {
-    //     return super.propose(targets, values, calldatas, description);
-    // }
-
     function proposalThreshold()
         public
         view
@@ -63,12 +54,6 @@ contract NuvoDao is
     {
         return super.proposalThreshold();
     }
-
-    // function quorum(
-    //     uint256 blockNumber
-    // ) public view override(Governor, GovernorVotesQuorumFraction) returns (uint256) {
-    //     return super.quorum(blockNumber);
-    // }
 
     function _queueOperations(
         uint256 proposalId,

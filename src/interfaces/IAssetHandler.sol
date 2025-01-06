@@ -11,6 +11,7 @@ struct AssetParam {
 }
 
 struct ConsolidateTaskParam {
+    string fromAddress;
     bytes32 ticker;
     bytes32 chainId;
     uint256 amount;
@@ -47,11 +48,15 @@ interface IAssetHandler {
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, bytes32 indexed chainId, bool isActive);
-    event Consolidate(bytes32 indexed ticker, bytes32 indexed chainId, uint256 amount);
+    event Consolidate(
+        bytes32 indexed ticker,
+        bytes32 indexed chainId,
+        string fromAddress,
+        uint256 amount
+    );
     event Withdraw(bytes32 indexed ticker, bytes32 indexed chainId, uint256 amount);
 
     // errors
-    // error InsufficientBalance(bytes32 ticker, bytes32 chainId);
     error AssetNotListed(bytes32 ticker);
 
     // Check if an asset is listed

@@ -82,7 +82,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * chainId The chain id of the asset.
      * amount The amount to deposit.
      */
-    function submitDepositTask(DepositInfo[] calldata _params) external onlyRole(SUBMITTER_ROLE) {
+    function submitDepositTask(
+        string[] calldata _txHash,
+        DepositInfo[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
             require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
             require(
@@ -93,6 +96,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
             taskManager.submitTask(
                 msg.sender,
+                _txHash[i],
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
         }
@@ -128,6 +132,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * amount The amount to deposit.
      */
     function submitWithdrawTask(
+        string[] calldata _txHash,
         WithdrawalInfo[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
@@ -145,6 +150,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             );
             taskManager.submitTask(
                 msg.sender,
+                _txHash[i],
                 abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i])
             );
         }
