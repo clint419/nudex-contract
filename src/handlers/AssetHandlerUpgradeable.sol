@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IAssetHandler, AssetParam, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, TransferGasFeePara, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
@@ -172,6 +172,25 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(ENTRYPOINT_ROLE) {
         linkedTokens[_ticker][_chainId].isActive = _isActive;
         emit TokenSwitch(_ticker, _chainId, _isActive);
+    }
+
+    function submitTransferGasFeeTask(
+        TransferGasFeePara[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) {
+        for (uint8 i; i < _params.length; i++) {
+            require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
+            require(_params[i].gasFee > 0, InvalidAmount());
+            taskManager.submitTask(
+                msg.sender,
+                abi.encodeWithSelector(this.transferGasFee.selector, _params[i])
+            );
+        }
+    }
+
+    function transferGasFee(
+        TransferGasFeePara calldata _params
+    ) external onlyRole(ENTRYPOINT_ROLE) {
+        emit TransferGasFee(_params.chainId, _params.toAddress, _params.gasFee);
     }
 
     /**

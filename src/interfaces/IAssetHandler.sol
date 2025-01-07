@@ -10,6 +10,12 @@ struct AssetParam {
     string assetAlias; // Common name of the asset
 }
 
+struct TransferGasFeePara {
+    bytes32 chainId;
+    string toAddress;
+    uint256 gasFee;
+}
+
 struct ConsolidateTaskParam {
     string fromAddress;
     bytes32 ticker;
@@ -47,6 +53,7 @@ interface IAssetHandler {
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, bytes32 indexed chainId, bool isActive);
+    event TransferGasFee(bytes32 indexed chainId, string toAddress, uint256 gasFee);
     event Consolidate(
         bytes32 indexed ticker,
         bytes32 indexed chainId,
@@ -57,6 +64,8 @@ interface IAssetHandler {
 
     // errors
     error AssetNotListed(bytes32 ticker);
+    error InvalidAddress();
+    error InvalidAmount();
 
     // Check if an asset is listed
     function isAssetListed(bytes32 _ticker) external view returns (bool);
