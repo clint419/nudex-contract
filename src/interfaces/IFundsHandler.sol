@@ -7,6 +7,7 @@ struct DepositInfo {
     bytes32 ticker;
     bytes32 chainId;
     uint256 amount;
+    string txHash;
     uint256 blockHeight;
     uint256 logIndex;
 }
@@ -27,6 +28,7 @@ interface IFundsHandler {
         bytes32 indexed ticker,
         bytes32 indexed chainId,
         uint256 amount,
+        string txHash,
         uint256 blockHeight,
         uint256 logIndex
     );
@@ -35,7 +37,8 @@ interface IFundsHandler {
         string depositAddress,
         bytes32 indexed ticker,
         bytes32 indexed chainId,
-        uint256 amount
+        uint256 amount,
+        string txHash
     );
 
     error InvalidAmount();
@@ -45,7 +48,10 @@ interface IFundsHandler {
 
     function recordDeposit(DepositInfo calldata _param) external returns (bytes memory);
 
-    function recordWithdrawal(WithdrawalInfo calldata _param) external returns (bytes memory);
+    function recordWithdrawal(
+        WithdrawalInfo calldata _param,
+        string calldata _txHash
+    ) external returns (bytes memory);
 
     function getDeposits(
         string calldata depositAddress

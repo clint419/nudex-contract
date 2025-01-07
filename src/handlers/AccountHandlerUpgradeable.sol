@@ -58,7 +58,6 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
-                "",
                 abi.encodeWithSelector(
                     this.registerNewAddress.selector,
                     _userAddr,

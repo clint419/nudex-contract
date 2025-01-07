@@ -70,7 +70,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
-                "",
                 abi.encodeWithSelector(this.listNewAsset.selector, _ticker, _assetParam)
             );
     }
@@ -104,7 +103,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         bytes calldata _callData
     ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64) {
-        return taskManager.submitTask(msg.sender, "", _callData);
+        return taskManager.submitTask(msg.sender, _callData);
     }
 
     // Update listed asset
@@ -194,7 +193,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             );
             taskManager.submitTask(
                 msg.sender,
-                _txHash[i],
                 abi.encodeWithSelector(this.consolidate.selector, _params[i])
             );
         }

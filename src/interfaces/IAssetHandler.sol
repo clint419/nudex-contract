@@ -37,7 +37,6 @@ struct TokenInfo {
     string contractAddress; // Address for ERC20, Inscription, or 0x0 for BTC/Ordinal/Native token
     string symbol;
     uint256 withdrawFee;
-    // uint256 balance; // TODO: do we need to store balance?
 }
 
 interface IAssetHandler {

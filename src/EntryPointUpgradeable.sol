@@ -155,10 +155,10 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
                 (success, result) = task.handler.call(result);
                 if (success) {
                     // success
-                    taskManager.updateTask(task.id, State.Completed, _operations[i].txHash, result);
+                    taskManager.updateTask(task.id, State.Completed, result);
                 } else {
                     // fail
-                    taskManager.updateTask(task.id, State.Failed, "", result);
+                    taskManager.updateTask(task.id, State.Failed, result);
                 }
             }
             // pending task
@@ -166,8 +166,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
                 taskManager.updateTask(
                     _operations[i].taskId,
                     State.Pending,
-                    _operations[i].txHash,
-                    task.result
+                    bytes.concat(task.result, _operations[i].extraData)
                 );
             }
             // fail task
@@ -175,7 +174,6 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
                 taskManager.updateTask(
                     _operations[i].taskId,
                     State.Failed,
-                    "",
                     _operations[i].extraData
                 );
             }

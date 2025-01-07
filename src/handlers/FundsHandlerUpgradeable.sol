@@ -96,7 +96,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
             taskManager.submitTask(
                 msg.sender,
-                _txHash[i],
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
         }
@@ -116,6 +115,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             _param.ticker,
             _param.chainId,
             _param.amount,
+            _param.txHash,
             _param.blockHeight,
             _param.logIndex
         );
@@ -132,7 +132,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * amount The amount to deposit.
      */
     function submitWithdrawTask(
-        string[] calldata _txHash,
         WithdrawalInfo[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
@@ -150,7 +149,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             );
             taskManager.submitTask(
                 msg.sender,
-                _txHash[i],
                 abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i])
             );
         }
@@ -160,7 +158,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * @dev Record withdraw info.
      */
     function recordWithdrawal(
-        WithdrawalInfo calldata _param
+        WithdrawalInfo calldata _param,
+        string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         withdrawals[_param.depositAddress].push(_param);
         assetHandler.withdraw(_param.ticker, _param.chainId, _param.amount);
@@ -169,8 +168,9 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             _param.depositAddress,
             _param.ticker,
             _param.chainId,
-            _param.amount
+            _param.amount,
+            _txHash
         );
-        return abi.encode(uint8(1), _param);
+        return abi.encode(uint8(1), _param, _txHash);
     }
 }

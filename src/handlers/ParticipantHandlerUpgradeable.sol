@@ -67,7 +67,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
-                "",
                 abi.encodeWithSelector(this.addParticipant.selector, _newParticipant)
             );
     }
@@ -98,7 +97,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
-                "",
                 abi.encodeWithSelector(this.removeParticipant.selector, _participant)
             );
     }
@@ -134,7 +132,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         return
             taskManager.submitTask(
                 msg.sender,
-                "",
                 abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants)
             );
     }

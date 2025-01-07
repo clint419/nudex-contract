@@ -6,7 +6,6 @@ import {State} from "./ITaskManager.sol";
 struct TaskOperation {
     uint64 taskId;
     State state;
-    string txHash;
     bytes extraData;
 }
 

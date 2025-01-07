@@ -11,7 +11,6 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     uint64 public nextTaskId;
     uint64 public nextCreatedTaskId;
     mapping(uint64 => Task) public tasks;
-    mapping(bytes32 => uint64) public taskRecords;
 
     function initialize(
         address _owner,
@@ -72,13 +71,9 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
      */
     function submitTask(
         address _submitter,
-        string calldata _txHash,
         bytes calldata _data
     ) external onlyRole(HANDLER_ROLE) returns (uint64) {
-        bytes32 hash = keccak256(_data);
-        uint64 taskId = taskRecords[hash];
-        require(taskId == 0, AlreadyExistTask(taskId));
-        taskId = nextTaskId++;
+        uint64 taskId = nextTaskId++;
         tasks[taskId] = Task({
             id: taskId,
             state: State.Created,
@@ -86,10 +81,8 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             handler: msg.sender,
             createdAt: uint32(block.timestamp),
             updatedAt: uint32(0),
-            txHash: _txHash,
             result: _data
         });
-        taskRecords[hash] = taskId;
 
         emit TaskSubmitted(taskId, _submitter, _data);
         return taskId;
@@ -104,7 +97,6 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     function updateTask(
         uint64 _taskId,
         State _state,
-        string calldata _txHash,
         bytes calldata _result
     ) external onlyRole(ENTRYPOINT_ROLE) {
         Task storage task = tasks[_taskId];
@@ -113,11 +105,9 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         }
         task.state = _state;
         task.updatedAt = uint32(block.timestamp);
-        // TODO: do we check the txHash?
-        task.txHash = _txHash;
         if (_result.length > 0) {
             task.result = _result;
         }
-        emit TaskUpdated(_taskId, task.submitter, _state, block.timestamp, _txHash, _result);
+        emit TaskUpdated(_taskId, task.submitter, _state, block.timestamp, _result);
     }
 }

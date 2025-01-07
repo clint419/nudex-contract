@@ -15,7 +15,6 @@ struct Task {
     address handler;
     uint32 createdAt;
     uint32 updatedAt;
-    string txHash;
     bytes result;
 }
 
@@ -26,16 +25,11 @@ interface ITaskManager {
         address indexed submitter,
         State indexed state,
         uint256 updateTime,
-        string txHash,
         bytes result
     );
 
     error EmptyTask();
-    error OnlyTaskSubmitter();
     error InvalidTask(uint64 taskId);
-    error InvalidPendingTask(uint64 taskId);
-    error AlreadyExistTask(uint64 taskId);
-    error InvalidAddress();
 
     function getTask(uint64) external view returns (Task memory);
 
@@ -45,16 +39,7 @@ interface ITaskManager {
 
     function getTaskState(uint64 _taskId) external view returns (State);
 
-    function submitTask(
-        address _submitter,
-        string calldata _txHash,
-        bytes calldata _context
-    ) external returns (uint64);
+    function submitTask(address _submitter, bytes calldata _context) external returns (uint64);
 
-    function updateTask(
-        uint64 _taskId,
-        State _state,
-        string calldata _txHash,
-        bytes calldata _result
-    ) external;
+    function updateTask(uint64 _taskId, State _state, bytes calldata _result) external;
 }
