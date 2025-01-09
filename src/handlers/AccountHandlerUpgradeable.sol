@@ -5,9 +5,9 @@ import {IAccountHandler} from "../interfaces/IAccountHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
-    // TODO: use bytes32 for key
-    mapping(bytes => string) public addressRecord;
-    mapping(string depositAddress => mapping(AddressCategory => uint256 account))
+    mapping(bytes32 => string) public addressRecord;
+    mapping(address userAddress => uint32 userAccount) public userAccounts;
+    mapping(string depositAddress => mapping(AddressCategory => address account))
         public userMapping;
 
     constructor(address _taskManager) HandlerBase(_taskManager) {}
@@ -32,8 +32,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         AddressCategory _chain,
         uint32 _index
     ) external view returns (string memory) {
-        // TODO: kecaak256 input
-        return addressRecord[abi.encodePacked(_account, _chain, _index)];
+        return addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))];
     }
 
     /**
@@ -52,8 +51,11 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         require(_userAddr != address(0), InvalidUserAddress());
         require(_account > 10000, InvalidAccountNumber(_account));
         require(
-            bytes(addressRecord[abi.encodePacked(_account, _chain, _index)]).length == 0,
-            RegisteredAccount(_account, addressRecord[abi.encodePacked(_account, _chain, _index)])
+            bytes(addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))]).length == 0,
+            RegisteredAccount(
+                _account,
+                addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))]
+            )
         );
         return
             taskManager.submitTask(
@@ -84,8 +86,9 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         string calldata _address
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(bytes(_address).length > 0, InvalidAddress());
-        addressRecord[abi.encodePacked(_account, _chain, _index)] = _address;
-        userMapping[_address][_chain] = _account;
+        userAccounts[_userAddr] = _account;
+        userMapping[_address][_chain] = _userAddr;
+        addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))] = _address;
         emit AddressRegistered(_userAddr, _account, _chain, _index, _address);
         return abi.encodePacked(uint8(1), _account, _chain, _index, _address);
     }

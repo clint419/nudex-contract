@@ -24,12 +24,12 @@ interface IAccountHandler {
     error InvalidInput();
     error RegisteredAccount(uint256, string);
 
-    function addressRecord(bytes calldata _input) external view returns (string memory);
+    function addressRecord(bytes32 _input) external view returns (string memory);
 
     function userMapping(
         string calldata _addr,
         AddressCategory _chain
-    ) external view returns (uint256);
+    ) external view returns (address);
 
     function getAddressRecord(
         uint32 _account,

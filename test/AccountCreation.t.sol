@@ -56,13 +56,19 @@ contract AccountCreationTest is BaseTest {
         );
         assertEq(
             accountHandler.addressRecord(
-                abi.encodePacked(DEFAULT_ACCOUNT, IAccountHandler.AddressCategory.BTC, uint32(0))
+                keccak256(
+                    abi.encodePacked(
+                        DEFAULT_ACCOUNT,
+                        IAccountHandler.AddressCategory.BTC,
+                        uint32(0)
+                    )
+                )
             ),
             depositAddress
         );
         assertEq(
             accountHandler.userMapping(depositAddress, IAccountHandler.AddressCategory.BTC),
-            DEFAULT_ACCOUNT
+            msgSender
         );
         assertEq(uint8(taskManager.getTaskState(taskOpts[0].taskId)), uint8(State.Completed));
 
