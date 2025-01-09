@@ -202,7 +202,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      * uint256 amount The amount to deposit
      */
     function submitConsolidateTask(
-        string[] calldata _txHash,
         ConsolidateTaskParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {

@@ -147,7 +147,6 @@ contract ParticipantTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 participantHandler.submitAddParticipantTask(newParticipants[i]),
                 State.Completed,
-                0,
                 ""
             );
         }
@@ -163,7 +162,6 @@ contract ParticipantTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 participantHandler.submitRemoveParticipantTask(newParticipants[i]),
                 State.Completed,
-                0,
                 ""
             );
         }

@@ -7,7 +7,7 @@ import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
 import {ITaskManager, State} from "../src/interfaces/ITaskManager.sol";
 
 contract AccountCreationTest is BaseTest {
-    uint256 constant DEFAULT_ACCOUNT = 10001;
+    uint32 constant DEFAULT_ACCOUNT = 10001;
 
     string public depositAddress;
 
@@ -50,13 +50,13 @@ contract AccountCreationTest is BaseTest {
             accountHandler.getAddressRecord(
                 DEFAULT_ACCOUNT,
                 IAccountHandler.AddressCategory.BTC,
-                uint(0)
+                uint32(0)
             ),
             depositAddress
         );
         assertEq(
             accountHandler.addressRecord(
-                abi.encodePacked(DEFAULT_ACCOUNT, IAccountHandler.AddressCategory.BTC, uint(0))
+                abi.encodePacked(DEFAULT_ACCOUNT, IAccountHandler.AddressCategory.BTC, uint32(0))
             ),
             depositAddress
         );
@@ -95,7 +95,7 @@ contract AccountCreationTest is BaseTest {
         );
 
         // fail case: account number less than 10000
-        uint256 invalidAccountNum = uint256(9999);
+        uint32 invalidAccountNum = uint32(9999);
         vm.expectRevert(
             abi.encodeWithSelector(IAccountHandler.InvalidAccountNumber.selector, invalidAccountNum)
         );
@@ -120,9 +120,9 @@ contract AccountCreationTest is BaseTest {
     }
 
     function testFuzz_SubmitTaskFuzz(
-        uint256 _account,
+        uint32 _account,
         uint8 _chain,
-        uint256 _index,
+        uint32 _index,
         string calldata _address
     ) public {
         vm.assume(_account < 10000000);

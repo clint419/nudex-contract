@@ -5,6 +5,7 @@ import {HandlerBase} from "./HandlerBase.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
 import {IFundsHandler, DepositInfo, WithdrawalInfo} from "../interfaces/IFundsHandler.sol";
 import {INIP20} from "../interfaces/INIP20.sol";
+import {console} from "forge-std/console.sol";
 
 contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     IAssetHandler public immutable assetHandler;
@@ -82,10 +83,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * chainId The chain id of the asset.
      * amount The amount to deposit.
      */
-    function submitDepositTask(
-        string[] calldata _txHash,
-        DepositInfo[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) {
+    function submitDepositTask(DepositInfo[] calldata _params) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
             require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
             require(
@@ -147,6 +145,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
+            console.log("submitWithdrawTask");
+            console.logBytes(abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i]));
             taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i])
@@ -161,6 +161,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         WithdrawalInfo calldata _param,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        console.log("\nrecordWithdrawal");
+        console.logBytes(msg.data);
         withdrawals[_param.depositAddress].push(_param);
         assetHandler.withdraw(_param.ticker, _param.chainId, _param.amount);
         emit WithdrawalRecorded(

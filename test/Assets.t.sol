@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "./BaseTest.sol";
 
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {IAssetHandler, AssetParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, ConsolidateTaskParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
 import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 
 contract AssetsTest is BaseTest {
@@ -46,15 +46,7 @@ contract AssetsTest is BaseTest {
         );
         assetHandler.listNewAsset(TICKER, assetParam);
         TokenInfo[] memory testTokenInfo = new TokenInfo[](1);
-        testTokenInfo[0] = TokenInfo(
-            CHAIN_ID,
-            true,
-            uint8(18),
-            "0xContractAddress",
-            "SYMBOL",
-            0,
-            100 ether
-        );
+        testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
         assetHandler.linkToken(TICKER, testTokenInfo);
         vm.stopPrank();
     }
@@ -89,8 +81,7 @@ contract AssetsTest is BaseTest {
             uint8(18),
             "0xNewTokenContractAddress",
             "TOKEN_SYMBOL",
-            1 ether,
-            50 ether
+            1 ether
         );
         newTokens[1] = TokenInfo(
             bytes32(uint256(0x02)),
@@ -98,8 +89,7 @@ contract AssetsTest is BaseTest {
             uint8(18),
             "0xNewTokenContractAddress2",
             "TOKEN_SYMBOL2",
-            5 ether,
-            80 ether
+            5 ether
         );
         taskOpts[0].taskId = assetHandler.submitAssetTask(
             TICKER,
@@ -147,7 +137,9 @@ contract AssetsTest is BaseTest {
 
     function test_ListAsset() public {
         vm.startPrank(msgSender);
-        taskOpts[0].taskId = assetHandler.submitConsolidateTask(TICKER, CHAIN_ID, 1 ether);
+        ConsolidateTaskParam[] memory consolidateParams = new ConsolidateTaskParam[](1);
+        consolidateParams[0] = ConsolidateTaskParam("0xFromAddress", TICKER, CHAIN_ID, 1 ether);
+        assetHandler.submitConsolidateTask(consolidateParams);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();

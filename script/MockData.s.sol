@@ -91,9 +91,9 @@ contract MockData is Script {
 
         // consolidate
         ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
-        consolidateTaskParams[0] = ConsolidateTaskParam(TICKER, CHAIN_ID, 1 ether);
-        consolidateTaskParams[1] = ConsolidateTaskParam(TICKER, CHAIN_ID, 2.5 ether);
-        consolidateTaskParams[2] = ConsolidateTaskParam(TICKER, CHAIN_ID, 3.3 ether);
+        consolidateTaskParams[0] = ConsolidateTaskParam("fromAddr1", TICKER, CHAIN_ID, 1 ether);
+        consolidateTaskParams[1] = ConsolidateTaskParam("fromAddr2", TICKER, CHAIN_ID, 2.5 ether);
+        consolidateTaskParams[2] = ConsolidateTaskParam("fromAddr3", TICKER, CHAIN_ID, 3.3 ether);
         assetHandler.submitConsolidateTask(consolidateTaskParams);
         assetHandler.consolidate(consolidateTaskParams[0]);
         assetHandler.consolidate(consolidateTaskParams[1]);
@@ -112,6 +112,7 @@ contract MockData is Script {
             TICKER,
             CHAIN_ID,
             1 ether,
+            "txHash",
             0,
             0
         );
@@ -129,7 +130,7 @@ contract MockData is Script {
         );
 
         fundsHandler.submitWithdrawTask(withdrawalInfos);
-        fundsHandler.recordWithdrawal(withdrawalInfos[0]);
+        fundsHandler.recordWithdrawal(withdrawalInfos[0], "TxHash");
         fundsHandler.setPauseState(TICKER, false);
         fundsHandler.setPauseState(CHAIN_ID, false);
     }
@@ -191,8 +192,8 @@ contract MockData is Script {
     }
 
     function updateTask() public {
-        taskManager.updateTask(0, State.Completed, keccak256("TxHash1"), bytes("0x01"));
-        taskManager.updateTask(1, State.Pending, keccak256("TxHash2"), bytes("0x02"));
-        taskManager.updateTask(2, State.Failed, keccak256("TxHash3"), bytes("0x03"));
+        taskManager.updateTask(0, State.Completed, bytes("0x01"));
+        taskManager.updateTask(1, State.Pending, bytes("0x02"));
+        taskManager.updateTask(2, State.Failed, bytes("0x03"));
     }
 }
