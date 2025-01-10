@@ -41,7 +41,7 @@ contract AccountCreationTest is BaseTest {
             IAccountHandler.AddressCategory.BTC,
             0
         );
-        taskOpts[0].extraData = offsetDepositString(depositAddress);
+        taskOpts[0].extraData = offsetString(depositAddress);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -147,7 +147,7 @@ contract AccountCreationTest is BaseTest {
         vm.stopPrank();
     }
 
-    function offsetDepositString(string memory _address) internal pure returns (bytes memory) {
+    function offsetString(string memory _address) internal pure returns (bytes memory) {
         bytes memory depositAddrData = abi.encode(_address);
         depositAddrData[31] = bytes1(uint8(160));
         return depositAddrData;

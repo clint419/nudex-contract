@@ -9,7 +9,7 @@ import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 contract AssetsTest is BaseTest {
     bytes32 public constant TICKER = "TOKEN_TICKER_18";
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
-    bytes32 public constant CHAIN_ID = 0;
+    uint64 public constant CHAIN_ID = 0;
     uint256 public constant MIN_DEPOSIT_AMOUNT = 50;
     uint256 public constant MIN_WITHDRAW_AMOUNT = 50;
 
@@ -76,7 +76,7 @@ contract AssetsTest is BaseTest {
         // link new token
         TokenInfo[] memory newTokens = new TokenInfo[](2);
         newTokens[0] = TokenInfo(
-            bytes32(uint256(0x01)),
+            uint64(0x01),
             true,
             uint8(18),
             "0xNewTokenContractAddress",
@@ -84,7 +84,7 @@ contract AssetsTest is BaseTest {
             1 ether
         );
         newTokens[1] = TokenInfo(
-            bytes32(uint256(0x02)),
+            uint64(0x02),
             true,
             uint8(18),
             "0xNewTokenContractAddress2",
@@ -98,7 +98,7 @@ contract AssetsTest is BaseTest {
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
         assertEq(assetHandler.getAllLinkedTokens(TICKER).length, 3);
-        assertEq(assetHandler.linkedTokenList(TICKER, 2), bytes32(uint256(0x02)));
+        assertEq(assetHandler.linkedTokenList(TICKER, 2), uint64(0x02));
 
         // deactive token
         assertTrue(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);

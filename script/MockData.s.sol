@@ -13,8 +13,8 @@ import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
 
 // this contract is only used for contract testing
 contract MockData is Script {
+    uint64 public constant CHAIN_ID = 0;
     bytes32 public constant TICKER = "TOKEN_TICKER_18";
-    bytes32 public constant CHAIN_ID = 0;
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
 
     uint256 public deployerPrivateKey;
@@ -108,9 +108,9 @@ contract MockData is Script {
         DepositInfo[] memory depositInfos = new DepositInfo[](1);
         depositInfos[0] = DepositInfo(
             deployer,
-            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            TICKER,
             CHAIN_ID,
+            TICKER,
+            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             1 ether,
             "txHash",
             0,
@@ -123,16 +123,23 @@ contract MockData is Script {
         WithdrawalInfo[] memory withdrawalInfos = new WithdrawalInfo[](1);
         withdrawalInfos[0] = WithdrawalInfo(
             deployer,
-            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            TICKER,
             CHAIN_ID,
+            TICKER,
+            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             1 ether
         );
 
         fundsHandler.submitWithdrawTask(withdrawalInfos);
-        fundsHandler.recordWithdrawal(withdrawalInfos[0], "TxHash");
+        fundsHandler.recordWithdrawal(
+            deployer,
+            CHAIN_ID,
+            TICKER,
+            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
+            1 ether,
+            "TxHash"
+        );
         fundsHandler.setPauseState(TICKER, false);
-        fundsHandler.setPauseState(CHAIN_ID, false);
+        fundsHandler.setPauseState(bytes32(uint256(CHAIN_ID)), false);
     }
 
     function accountData() public {
