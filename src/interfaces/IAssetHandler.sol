@@ -10,16 +10,18 @@ struct AssetParam {
     string assetAlias; // Common name of the asset
 }
 
-struct TransferGasFeePara {
-    bytes32 chainId;
+struct TransferParam {
+    bytes32 ticker;
+    uint64 chainId;
+    string fromAddress;
     string toAddress;
-    uint256 gasFee;
+    uint256 amount;
 }
 
 struct ConsolidateTaskParam {
     string fromAddress;
     bytes32 ticker;
-    bytes32 chainId;
+    uint64 chainId;
     uint256 amount;
 }
 
@@ -37,7 +39,7 @@ struct NudexAsset {
 }
 
 struct TokenInfo {
-    bytes32 chainId; // Chain ID for EVM-based assets, or specific IDs for BTC/Ordinal
+    uint64 chainId; // Chain ID for EVM-based assets, or specific IDs for BTC/Ordinal
     bool isActive;
     uint8 decimals;
     string contractAddress; // Address for ERC20, Inscription, or 0x0 for BTC/Ordinal/Native token
@@ -52,15 +54,15 @@ interface IAssetHandler {
     event AssetDelisted(bytes32 indexed ticker);
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
     event ResetLinkedToken(bytes32 indexed ticker);
-    event TokenSwitch(bytes32 indexed ticker, bytes32 indexed chainId, bool isActive);
-    event TransferGasFee(bytes32 indexed chainId, string toAddress, uint256 gasFee);
+    event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
+    event Transfer(uint64 indexed chainId, string fromAddress, string toAddress, uint256 amount);
     event Consolidate(
         bytes32 indexed ticker,
-        bytes32 indexed chainId,
+        uint64 indexed chainId,
         string fromAddress,
         uint256 amount
     );
-    event Withdraw(bytes32 indexed ticker, bytes32 indexed chainId, uint256 amount);
+    event Withdraw(bytes32 indexed ticker, uint64 indexed chainId, uint256 amount);
 
     // errors
     error AssetNotListed(bytes32 ticker);
@@ -76,5 +78,5 @@ interface IAssetHandler {
     // Get the list of all listed assets
     function getAllAssets() external view returns (bytes32[] memory);
 
-    function withdraw(bytes32 _ticker, bytes32 _chainId, uint256 _amount) external;
+    function withdraw(bytes32 _ticker, uint64 _chainId, uint256 _amount) external;
 }

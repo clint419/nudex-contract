@@ -3,9 +3,9 @@ pragma solidity ^0.8.26;
 
 struct DepositInfo {
     address userAddress;
-    string depositAddress;
+    uint64 chainId;
     bytes32 ticker;
-    bytes32 chainId;
+    string depositAddress;
     uint256 amount;
     string txHash;
     uint256 blockHeight;
@@ -14,9 +14,9 @@ struct DepositInfo {
 
 struct WithdrawalInfo {
     address userAddress;
-    string depositAddress;
+    uint64 chainId;
     bytes32 ticker;
-    bytes32 chainId;
+    string toAddress;
     uint256 amount;
 }
 
@@ -24,9 +24,9 @@ interface IFundsHandler {
     event NewPauseState(bytes32 indexed condition, bool indexed newState);
     event DepositRecorded(
         address indexed userAddress,
-        string depositAddress,
         bytes32 indexed ticker,
-        bytes32 indexed chainId,
+        uint64 indexed chainId,
+        string depositAddress,
         uint256 amount,
         string txHash,
         uint256 blockHeight,
@@ -34,9 +34,9 @@ interface IFundsHandler {
     );
     event WithdrawalRecorded(
         address indexed userAddress,
-        string depositAddress,
         bytes32 indexed ticker,
-        bytes32 indexed chainId,
+        uint64 indexed chainId,
+        string toAddress,
         uint256 amount,
         string txHash
     );
@@ -49,14 +49,14 @@ interface IFundsHandler {
     function recordDeposit(DepositInfo calldata _param) external returns (bytes memory);
 
     function recordWithdrawal(
-        WithdrawalInfo calldata _param,
+        address _userAddress,
+        uint64 _chainId,
+        bytes32 _ticker,
+        string calldata _toAddress,
+        uint256 _amount,
         string calldata _txHash
     ) external returns (bytes memory);
 
-    function getDeposits(
-        string calldata depositAddress
-    ) external view returns (DepositInfo[] memory);
-    function getWithdrawals(
-        string calldata depositAddress
-    ) external view returns (WithdrawalInfo[] memory);
+    function getDeposits(address depositAddress) external view returns (DepositInfo[] memory);
+    function getWithdrawals(address depositAddress) external view returns (WithdrawalInfo[] memory);
 }

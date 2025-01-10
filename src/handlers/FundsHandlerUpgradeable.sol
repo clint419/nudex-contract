@@ -11,8 +11,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     IAssetHandler public immutable assetHandler;
 
     mapping(bytes32 pauseType => bool isPaused) public pauseState;
-    mapping(string userAddr => DepositInfo[]) public deposits;
-    mapping(string userAddr => WithdrawalInfo[]) public withdrawals;
+    mapping(address userAddr => DepositInfo[]) public deposits;
+    mapping(address userAddr => WithdrawalInfo[]) public withdrawals;
 
     constructor(address _assetHandler, address _taskManager) HandlerBase(_taskManager) {
         assetHandler = IAssetHandler(_assetHandler);
@@ -30,42 +30,35 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     /**
      * @dev Get all deposit records of user.
      */
-    function getDeposits(
-        string calldata _depositAddress
-    ) external view returns (DepositInfo[] memory) {
-        require(bytes(_depositAddress).length > 0, InvalidAddress());
-        return deposits[_depositAddress];
+    function getDeposits(address _userAddress) external view returns (DepositInfo[] memory) {
+        return deposits[_userAddress];
     }
 
     /**
      * @dev Get n-th deposit record of user.
      */
     function getDeposit(
-        string calldata _depositAddress,
+        address _userAddress,
         uint256 _index
     ) external view returns (DepositInfo memory) {
-        require(bytes(_depositAddress).length > 0, InvalidAddress());
-        return deposits[_depositAddress][_index];
+        return deposits[_userAddress][_index];
     }
 
     /**
      * @dev Get all withdraw records of user.
      */
-    function getWithdrawals(
-        string calldata _depositAddress
-    ) external view returns (WithdrawalInfo[] memory) {
-        return withdrawals[_depositAddress];
+    function getWithdrawals(address _userAddress) external view returns (WithdrawalInfo[] memory) {
+        return withdrawals[_userAddress];
     }
 
     /**
      * @dev Get n-th withdraw record of user.
      */
     function getWithdrawal(
-        string calldata _depositAddress,
+        address _userAddress,
         uint256 _index
     ) external view returns (WithdrawalInfo memory) {
-        require(bytes(_depositAddress).length > 0, InvalidAddress());
-        return withdrawals[_depositAddress][_index];
+        return withdrawals[_userAddress][_index];
     }
 
     // TODO: role for adjusting Pause state
@@ -85,7 +78,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      */
     function submitDepositTask(DepositInfo[] calldata _params) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
-            require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
+            require(
+                !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
+                Paused()
+            );
             require(
                 _params[i].amount >=
                     assetHandler.getAssetDetails(_params[i].ticker).minDepositAmount,
@@ -105,13 +101,13 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     function recordDeposit(
         DepositInfo calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
-        deposits[_param.depositAddress].push(_param);
+        deposits[_param.userAddress].push(_param);
         emit INIP20.NIP20TokenEvent_mintb(_param.userAddress, _param.ticker, _param.amount);
         emit DepositRecorded(
             _param.userAddress,
-            _param.depositAddress,
             _param.ticker,
             _param.chainId,
+            _param.depositAddress,
             _param.amount,
             _param.txHash,
             _param.blockHeight,
@@ -133,23 +129,32 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         WithdrawalInfo[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
-            require(!pauseState[_params[i].ticker] && !pauseState[_params[i].chainId], Paused());
+            require(
+                !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
+                Paused()
+            );
             require(
                 _params[i].amount >=
                     assetHandler.getAssetDetails(_params[i].ticker).minWithdrawAmount,
                 InvalidAmount()
             );
-            require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
+            require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
             emit INIP20.NIP20TokenEvent_burnb(
                 _params[i].userAddress,
                 _params[i].ticker,
                 _params[i].amount
             );
-            console.log("submitWithdrawTask");
-            console.logBytes(abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i]));
             taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.recordWithdrawal.selector, _params[i])
+                abi.encodeWithSelector(
+                    this.recordWithdrawal.selector,
+                    _params[i].userAddress,
+                    _params[i].chainId,
+                    _params[i].ticker,
+                    _params[i].toAddress,
+                    _params[i].amount,
+                    uint256(256)
+                )
             );
         }
     }
@@ -158,21 +163,18 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * @dev Record withdraw info.
      */
     function recordWithdrawal(
-        WithdrawalInfo calldata _param,
+        address _userAddress,
+        uint64 _chainId,
+        bytes32 _ticker,
+        string calldata _toAddress,
+        uint256 _amount,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
-        console.log("\nrecordWithdrawal");
-        console.logBytes(msg.data);
-        withdrawals[_param.depositAddress].push(_param);
-        assetHandler.withdraw(_param.ticker, _param.chainId, _param.amount);
-        emit WithdrawalRecorded(
-            _param.userAddress,
-            _param.depositAddress,
-            _param.ticker,
-            _param.chainId,
-            _param.amount,
-            _txHash
+        withdrawals[_userAddress].push(
+            WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount)
         );
-        return abi.encode(uint8(1), _param, _txHash);
+        assetHandler.withdraw(_ticker, _chainId, _amount);
+        emit WithdrawalRecorded(_userAddress, _ticker, _chainId, _toAddress, _amount, _txHash);
+        return abi.encode(uint8(1), _userAddress, _chainId, _ticker, _toAddress, _amount, _txHash);
     }
 }

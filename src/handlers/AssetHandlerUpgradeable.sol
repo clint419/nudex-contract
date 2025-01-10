@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IAssetHandler, AssetParam, TransferGasFeePara, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, TransferParam, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
@@ -10,9 +10,9 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     // Mapping from asset identifiers to their details
     bytes32[] public assetTickerList;
     mapping(bytes32 ticker => NudexAsset) public nudexAssets;
-    mapping(bytes32 ticker => bytes32[] chainIds) public linkedTokenList;
-    mapping(bytes32 ticker => mapping(bytes32 chainId => TokenInfo)) public linkedTokens;
-    mapping(bytes32 ticker => mapping(bytes32 chainId => ConsolidateTaskParam[]))
+    mapping(bytes32 ticker => uint64[] chainIds) public linkedTokenList;
+    mapping(bytes32 ticker => mapping(uint64 chainId => TokenInfo)) public linkedTokens;
+    mapping(bytes32 ticker => mapping(uint64 chainId => ConsolidateTaskParam[]))
         public consolidateHistory;
 
     modifier checkListing(bytes32 _ticker) {
@@ -49,14 +49,14 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // Get the list of all listed assets
-    function getAllLinkedTokens(bytes32 _ticker) external view returns (bytes32[] memory) {
+    function getAllLinkedTokens(bytes32 _ticker) external view returns (uint64[] memory) {
         return linkedTokenList[_ticker];
     }
 
     // Get the details of a linked token
     function getLinkedToken(
         bytes32 _ticker,
-        bytes32 _chainId
+        uint64 _chainId
     ) external view returns (TokenInfo memory) {
         return linkedTokens[_ticker][_chainId];
     }
@@ -146,7 +146,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         TokenInfo[] calldata _tokenInfos
     ) external onlyRole(ENTRYPOINT_ROLE) {
         for (uint8 i; i < _tokenInfos.length; ++i) {
-            bytes32 chainId = _tokenInfos[i].chainId;
+            uint64 chainId = _tokenInfos[i].chainId;
             require(linkedTokens[_ticker][chainId].chainId == 0, "Linked Token");
             linkedTokens[_ticker][chainId] = _tokenInfos[i];
             linkedTokenList[_ticker].push(chainId);
@@ -156,7 +156,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
 
     // delete all linked tokens
     function resetlinkedToken(bytes32 _ticker) public onlyRole(ENTRYPOINT_ROLE) {
-        bytes32[] memory chainIds = linkedTokenList[_ticker];
+        uint64[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
         for (uint32 i; i < chainIds.length; ++i) {
             linkedTokens[_ticker][chainIds[i]].isActive = false;
@@ -167,30 +167,43 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     // switch token status to active or inactive
     function tokenSwitch(
         bytes32 _ticker,
-        bytes32 _chainId,
+        uint64 _chainId,
         bool _isActive
     ) external onlyRole(ENTRYPOINT_ROLE) {
         linkedTokens[_ticker][_chainId].isActive = _isActive;
         emit TokenSwitch(_ticker, _chainId, _isActive);
     }
 
-    function submitTransferGasFeeTask(
-        TransferGasFeePara[] calldata _params
+    /**
+     * @dev Submit a task to transfer asset
+     * @param _params The task parameters
+     * bytes32 ticker The asset ticker
+     * uint64 chainId The chain id
+     * string fromAddress The address to transfer from
+     * string toAddress The address to transfer to
+     * uint256 amount The amount to transfer
+     */
+    function submitTransferTask(
+        TransferParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) {
         for (uint8 i; i < _params.length; i++) {
+            require(bytes(_params[i].fromAddress).length > 0, InvalidAddress());
             require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
-            require(_params[i].gasFee > 0, InvalidAmount());
+            require(_params[i].amount > 0, InvalidAmount());
             taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.transferGasFee.selector, _params[i])
+                abi.encodeWithSelector(this.transfer.selector, _params[i])
             );
         }
     }
 
-    function transferGasFee(
-        TransferGasFeePara calldata _params
-    ) external onlyRole(ENTRYPOINT_ROLE) {
-        emit TransferGasFee(_params.chainId, _params.toAddress, _params.gasFee);
+    /**
+     * @dev Transfer the asset
+     */
+    function transfer(
+        TransferParam calldata _param
+    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
+        emit Transfer(_param.chainId, _param.fromAddress, _param.toAddress, _param.amount);
     }
 
     /**
@@ -198,7 +211,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      * @param _params The task parameters
      * address[] fromAddr The addresses to consolidate from
      * bytes32 ticker The asset ticker
-     * bytes32 chainId The chain id
+     * uint64 chainId The chain id
      * uint256 amount The amount to deposit
      */
     function submitConsolidateTask(
@@ -234,7 +247,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      */
     function withdraw(
         bytes32 _ticker,
-        bytes32 _chainId,
+        uint64 _chainId,
         uint256 _amount
     ) external onlyRole(FUNDS_ROLE) checkListing(_ticker) {
         require(linkedTokens[_ticker][_chainId].isActive, "Inactive token");
