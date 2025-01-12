@@ -52,7 +52,7 @@ contract Deploy is Script {
         // deploy nuvoLock
         lockProxy = deployProxy(address(new NuvoLockUpgradeable()), daoContract);
         NuvoLockUpgradeable nuvoLock = NuvoLockUpgradeable(lockProxy);
-        nuvoLock.initialize(nuvoToken, deployer, vmProxy, 1 weeks, 1 ether);
+        nuvoLock.initialize(nuvoToken, deployer, daoContract, vmProxy, 1 weeks, 1 ether);
 
         // deploy taskManager & taskSubmitter
         tmProxy = deployProxy(address(new TaskManagerUpgradeable()), daoContract);

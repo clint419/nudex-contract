@@ -62,11 +62,13 @@ contract BaseTest is Test {
         nuvoLock.initialize(
             address(nuvoToken),
             msgSender,
+            msgSender,
             vmProxy,
             MIN_LOCK_AMOUNT,
             MIN_LOCK_PERIOD
         );
-        assertEq(nuvoLock.owner(), vmProxy);
+        assertTrue(nuvoLock.hasRole(0x00, msgSender));
+        assertTrue(nuvoLock.hasRole(ENTRYPOINT_ROLE, vmProxy));
 
         // deploy taskManager
         address tmProxy = _deployProxy(address(new TaskManagerUpgradeable()), daoContract);

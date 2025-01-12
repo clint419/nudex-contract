@@ -56,7 +56,7 @@ contract DeployTest is Script {
 
         // deploy nuvoLock
         NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable();
-        nuvoLock.initialize(address(nuvoToken), deployer, entryPointAddr, 300, 10);
+        nuvoLock.initialize(address(nuvoToken), deployer, daoContract, entryPointAddr, 300, 10);
         console.log("|NuvoLock|", address(nuvoLock));
 
         // deploy taskManager

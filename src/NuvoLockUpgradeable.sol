@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {INuvoLock} from "./interfaces/INuvoLock.sol";
 
-contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
+contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
     using SafeERC20 for IERC20;
+
+    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
 
     uint256 private initTimestamp;
 
@@ -31,17 +33,20 @@ contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
     function initialize(
         address _nuvoToken,
         address _rewardSource,
-        address _owner,
+        address _dao,
+        address _entryPoint,
         uint256 _minLockAmount,
         uint256 _minLockPeriod
     ) public initializer {
-        __Ownable_init(_owner);
+        __AccessControl_init();
+        _grantRole(DEFAULT_ADMIN_ROLE, _dao);
+        _grantRole(ENTRYPOINT_ROLE, _entryPoint);
 
         nuvoToken = IERC20(_nuvoToken);
         rewardSource = _rewardSource;
         initTimestamp = block.timestamp;
-        minLockPeriod = _minLockPeriod;
         minLockAmount = _minLockAmount;
+        minLockPeriod = _minLockPeriod;
         lastPeriodNumber = getCurrentPeriod();
     }
 
@@ -65,7 +70,10 @@ contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
      * @param _minLockAmount New min lock amount.
      * @param _minLockPeriod New min lock period.
      */
-    function setMinLockInfo(uint256 _minLockAmount, uint32 _minLockPeriod) external onlyOwner {
+    function setMinLockInfo(
+        uint256 _minLockAmount,
+        uint32 _minLockPeriod
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         minLockAmount = _minLockAmount;
         minLockPeriod = _minLockPeriod;
         emit MinLockInfo(minLockAmount, minLockPeriod);
@@ -75,7 +83,7 @@ contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
      * @dev Set new reward per period.
      * @param _newRewardPerPeriod New reward per period.
      */
-    function setRewardPerPeriod(uint256 _newRewardPerPeriod) external onlyOwner {
+    function setRewardPerPeriod(uint256 _newRewardPerPeriod) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Accumulate rewards for all previous periods before updating the reward per period
         accumulateRewards();
 
@@ -144,7 +152,10 @@ contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
      * @dev Add bonus point for user.
      * @param _userAddr The user address.
      */
-    function accumulateBonusPoints(address _userAddr, uint256 _amount) external onlyOwner {
+    function accumulateBonusPoints(
+        address _userAddr,
+        uint256 _amount
+    ) external onlyRole(ENTRYPOINT_ROLE) {
         require(locks[_userAddr].amount > 0, NotAUser(_userAddr));
 
         // Check if the reward period has ended and accumulate rewards if necessary
@@ -161,7 +172,10 @@ contract NuvoLockUpgradeable is INuvoLock, OwnableUpgradeable {
      * @dev Add demerit point for user
      * @param _userAddr The user address.
      */
-    function accumulateDemeritPoints(address _userAddr, uint256 _amount) external onlyOwner {
+    function accumulateDemeritPoints(
+        address _userAddr,
+        uint256 _amount
+    ) external onlyRole(ENTRYPOINT_ROLE) {
         // Check if the reward period has ended and accumulate rewards if necessary
         if (getCurrentPeriod() > lastPeriodNumber) {
             accumulateRewards();

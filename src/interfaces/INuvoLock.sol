@@ -59,14 +59,6 @@ interface INuvoLock {
             uint256 demeritPoints
         );
 
-    function initialize(
-        address _nuvoToken,
-        address _rewardSource,
-        address _owner,
-        uint256 _minLockAmount,
-        uint256 _minLockPeriod
-    ) external;
-
     function lock(uint256 amount, uint32 period) external;
 
     function unlock() external;
