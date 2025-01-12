@@ -15,6 +15,7 @@ import {EntryPointUpgradeable} from "../src/EntryPointUpgradeable.sol";
 
 // this contract is only used for contract testing
 contract DeployTest is Script {
+    address deployer;
     address daoContract;
     address tssSigner;
     address[] initialParticipants;
@@ -24,29 +25,50 @@ contract DeployTest is Script {
         // TODO: temporary dao contract
         daoContract = vm.envAddress("DAO_CONTRACT_ADDR");
         console.log("DAO contract addr: ", daoContract);
-
         tssSigner = vm.envAddress("TSS_SIGNER_ADDR");
-        initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-        initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-        initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
+        console.log("TSS signer addr: ", tssSigner);
     }
 
     function run() public {
-        run(true);
-    }
-
-    function run(bool _useEntryPoint) public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.createWallet(deployerPrivateKey).addr;
+        deployer = vm.createWallet(deployerPrivateKey).addr;
         console.log("Deployer address: ", deployer);
         vm.startBroadcast(deployerPrivateKey);
 
+        setupParticipant(false);
+        deploy(true);
+
+        vm.stopBroadcast();
+    }
+
+    function setupParticipant(bool _fromEnv) public {
+        if (_fromEnv) {
+            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_2"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_3"));
+        } else {
+            (address participant1, uint256 key1) = makeAddrAndKey("participant1");
+            (address participant2, uint256 key2) = makeAddrAndKey("participant2");
+            (address participant3, uint256 key3) = makeAddrAndKey("participant3");
+            initialParticipants.push(participant1);
+            initialParticipants.push(participant2);
+            initialParticipants.push(participant3);
+            console.log("\nParticipant 1: ", participant1);
+            console.logBytes32(bytes32(key1));
+            console.log("\nParticipant 2: ", participant2);
+            console.logBytes32(bytes32(key2));
+            console.log("\nParticipant 3: ", participant3);
+            console.logBytes32(bytes32(key3));
+        }
+    }
+
+    function deploy(bool _useEntryPoint) public {
         address entryPointAddr;
         if (_useEntryPoint) {
             // deploy entryPoint proxy
             EntryPointUpgradeable entryPoint = new EntryPointUpgradeable();
             entryPointAddr = address(entryPoint);
-            console.log("|EntryPoint| ", entryPointAddr);
+            console.log("\n  |EntryPoint| ", entryPointAddr);
         } else {
             entryPointAddr = deployer;
         }
@@ -106,7 +128,5 @@ contract DeployTest is Script {
                 address(nuvoLock) // nuvoLock
             );
         }
-
-        vm.stopBroadcast();
     }
 }
