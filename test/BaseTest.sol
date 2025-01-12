@@ -57,16 +57,12 @@ contract BaseTest is Test {
         entryPoint = EntryPointUpgradeable(vmProxy);
 
         // deploy NuvoLockUpgradeable
-        address nuvoLockProxy = _deployProxy(address(new NuvoLockUpgradeable()), daoContract);
-        nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
-        nuvoLock.initialize(
-            address(nuvoToken),
-            msgSender,
-            msgSender,
-            vmProxy,
-            MIN_LOCK_AMOUNT,
-            MIN_LOCK_PERIOD
+        address nuvoLockProxy = _deployProxy(
+            address(new NuvoLockUpgradeable(address(nuvoToken))),
+            daoContract
         );
+        nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
+        nuvoLock.initialize(msgSender, msgSender, vmProxy, MIN_LOCK_AMOUNT, MIN_LOCK_PERIOD);
         assertTrue(nuvoLock.hasRole(0x00, msgSender));
         assertTrue(nuvoLock.hasRole(ENTRYPOINT_ROLE, vmProxy));
 

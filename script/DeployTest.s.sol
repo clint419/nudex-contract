@@ -32,12 +32,12 @@ contract DeployTest is Script {
     }
 
     function run() public {
-        run(false);
+        run(true);
     }
 
     function run(bool _useEntryPoint) public {
-        uint256 deployerPrivateKey = vm.envUint("PARTICIPANT_KEY_1");
-        address deployer = vm.envAddress("PARTICIPANT_1");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address deployer = vm.createWallet(deployerPrivateKey).addr;
         console.log("Deployer address: ", deployer);
         vm.startBroadcast(deployerPrivateKey);
 
@@ -55,8 +55,8 @@ contract DeployTest is Script {
         console.log("|NuvoToken|", address(nuvoToken));
 
         // deploy nuvoLock
-        NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable();
-        nuvoLock.initialize(address(nuvoToken), deployer, daoContract, entryPointAddr, 300, 10);
+        NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable(address(nuvoToken));
+        nuvoLock.initialize(deployer, daoContract, entryPointAddr, 300, 10);
         console.log("|NuvoLock|", address(nuvoLock));
 
         // deploy taskManager

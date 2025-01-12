@@ -15,16 +15,12 @@ contract NuvoLockTest is BaseTest {
         address rewardSource = makeAddr("rewardSource");
         nuvoToken.mint(rewardSource, 100 ether);
         // deploy NuvoLockUpgradeable
-        nuvoLockProxy = _deployProxy(address(new NuvoLockUpgradeable()), daoContract);
-        nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
-        nuvoLock.initialize(
-            address(nuvoToken),
-            rewardSource,
-            msgSender,
-            vmProxy,
-            MIN_LOCK_AMOUNT,
-            MIN_LOCK_PERIOD
+        nuvoLockProxy = _deployProxy(
+            address(new NuvoLockUpgradeable(address(nuvoToken))),
+            daoContract
         );
+        nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
+        nuvoLock.initialize(rewardSource, msgSender, vmProxy, MIN_LOCK_AMOUNT, MIN_LOCK_PERIOD);
         vm.prank(rewardSource);
         nuvoToken.approve(nuvoLockProxy, 100 ether);
 

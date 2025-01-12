@@ -9,10 +9,10 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
     using SafeERC20 for IERC20;
 
     bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
+    IERC20 public immutable nuvoToken;
 
     uint256 private initTimestamp;
 
-    IERC20 public nuvoToken;
     address public rewardSource;
     uint32 public lastPeriodNumber; // Tracks the last reward period
     uint256 public minLockAmount;
@@ -30,8 +30,11 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
         _;
     }
 
+    constructor(address _nuvoToken) {
+        nuvoToken = IERC20(_nuvoToken);
+    }
+
     function initialize(
-        address _nuvoToken,
         address _rewardSource,
         address _dao,
         address _entryPoint,
@@ -42,7 +45,6 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
         _grantRole(DEFAULT_ADMIN_ROLE, _dao);
         _grantRole(ENTRYPOINT_ROLE, _entryPoint);
 
-        nuvoToken = IERC20(_nuvoToken);
         rewardSource = _rewardSource;
         initTimestamp = block.timestamp;
         minLockAmount = _minLockAmount;
