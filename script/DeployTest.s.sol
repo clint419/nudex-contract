@@ -44,21 +44,15 @@ contract DeployTest is Script {
     function setupParticipant(bool _fromEnv) public {
         if (_fromEnv) {
             initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_2"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_3"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
         } else {
             (address participant1, uint256 key1) = makeAddrAndKey("participant1");
-            (address participant2, uint256 key2) = makeAddrAndKey("participant2");
-            (address participant3, uint256 key3) = makeAddrAndKey("participant3");
             initialParticipants.push(participant1);
-            initialParticipants.push(participant2);
-            initialParticipants.push(participant3);
-            console.log("\nParticipant 1: ", participant1);
+            initialParticipants.push(participant1);
+            initialParticipants.push(participant1);
+            console.log("\nParticipant: ", participant1);
             console.logBytes32(bytes32(key1));
-            console.log("\nParticipant 2: ", participant2);
-            console.logBytes32(bytes32(key2));
-            console.log("\nParticipant 3: ", participant3);
-            console.logBytes32(bytes32(key3));
         }
     }
 

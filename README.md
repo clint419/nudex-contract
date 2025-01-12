@@ -4,11 +4,15 @@ Smart contracts used by nuDex deposits and withdraw
 
 ## Deployed Contracts
 
-> BSC Testnet
+> Goat Testnet
 
-| Contract                | Address                                    |
-| ----------------------- | ------------------------------------------ |
-| TaskManager             | 0xcEF78fa1C7208b76cbb4e5281dba0dCA1A3E4E52 |
-| AccountHandler          | 0xc92c7F53B314887D893ffA6c35eAcfAD5094173D |
-| AssetHandlerUpgradeable | 0x06865178783a527669172A87376Bf03B8027F441 |
-| FundsHandlerUpgradeable | 0x4E1F04B44548E8D960f6Cf7163224f5F0737182F |
+| Contract           | Address                                    |
+| ------------------ | ------------------------------------------ |
+| EntryPoint         | 0xD7Bf3503C856c18eCb07eAf72E45E37f9Ab68A5B |
+| NuvoToken          | 0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df |
+| NuvoLock           | 0xc8006AAD20e8D15C7B3F8b45f309864034b9156B |
+| TaskManager        | 0x82FD233cf0Cd6F039BD84E4D24D83a7001bB6Ee6 |
+| ParticipantHandler | 0xC9E21EC90722292FD442e433339955CAb7B37187 |
+| AccountHandler     | 0xc28f0c6060310c9C50A8270D20d3b835f4d65d7f |
+| AssetHandler       | 0x09b022D903Faae482250dc7b95E223A1D0F0131b |
+| FundsHandler       | 0x891f069A4e9EA06aB2ACacbd6aD8a79Dbf9EAEE2 |
