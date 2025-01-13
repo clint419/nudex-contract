@@ -14,5 +14,5 @@ Smart contracts used by nuDex deposits and withdraw
 | TaskManager        | 0x82FD233cf0Cd6F039BD84E4D24D83a7001bB6Ee6 |
 | ParticipantHandler | 0xC9E21EC90722292FD442e433339955CAb7B37187 |
 | AccountHandler     | 0xc28f0c6060310c9C50A8270D20d3b835f4d65d7f |
-| AssetHandler       | 0x09b022D903Faae482250dc7b95E223A1D0F0131b |
+| AssetHandler       | 0x6a8DDF6AD9C27aB868B223115515FE9E99F30D43 |
 | FundsHandler       | 0x891f069A4e9EA06aB2ACacbd6aD8a79Dbf9EAEE2 |

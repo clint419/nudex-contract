@@ -16,6 +16,7 @@ struct TransferParam {
     string fromAddress;
     string toAddress;
     uint256 amount;
+    string txHash;
 }
 
 struct ConsolidateTaskParam {
@@ -23,6 +24,7 @@ struct ConsolidateTaskParam {
     bytes32 ticker;
     uint64 chainId;
     uint256 amount;
+    string txHash;
 }
 
 struct NudexAsset {

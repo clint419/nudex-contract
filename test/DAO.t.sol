@@ -10,9 +10,16 @@ contract DAOTest is BaseTest {
     function setUp() public override {
         super.setUp();
 
-        address[] memory empty = new address[](0);
-        TimelockController timelock = new TimelockController(2 days, empty, empty, msgSender);
+        address[] memory executor = new address[](1);
+        executor[0] = msgSender;
+        TimelockController timelock = new TimelockController(1 days, executor, executor, msgSender);
 
         dao = new NuvoDao(nuvoToken, timelock);
+    }
+
+    function test_General() public {
+        assertEq(dao.votingDelay(), 0);
+        assertEq(dao.votingPeriod(), 3600);
+        assertEq(dao.proposalThreshold(), 1);
     }
 }

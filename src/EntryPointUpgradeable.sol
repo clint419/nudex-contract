@@ -147,7 +147,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
         bool success;
         bytes memory result;
         Task memory task;
-        for (uint8 i; i < _operations.length; ++i) {
+        for (uint8 i; i < _operations.length; ) {
             task = taskManager.getTask(_operations[i].taskId);
             // execute task
             if (_operations[i].state == State.Completed) {
@@ -176,6 +176,9 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
                     State.Failed,
                     _operations[i].extraData
                 );
+            }
+            unchecked {
+                ++i;
             }
         }
     }

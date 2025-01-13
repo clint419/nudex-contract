@@ -138,7 +138,13 @@ contract AssetsTest is BaseTest {
     function test_ListAsset() public {
         vm.startPrank(msgSender);
         ConsolidateTaskParam[] memory consolidateParams = new ConsolidateTaskParam[](1);
-        consolidateParams[0] = ConsolidateTaskParam("0xFromAddress", TICKER, CHAIN_ID, 1 ether);
+        consolidateParams[0] = ConsolidateTaskParam(
+            "0xFromAddress",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            "txHash"
+        );
         assetHandler.submitConsolidateTask(consolidateParams);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);

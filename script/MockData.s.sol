@@ -91,9 +91,27 @@ contract MockData is Script {
 
         // consolidate
         ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
-        consolidateTaskParams[0] = ConsolidateTaskParam("fromAddr1", TICKER, CHAIN_ID, 1 ether);
-        consolidateTaskParams[1] = ConsolidateTaskParam("fromAddr2", TICKER, CHAIN_ID, 2.5 ether);
-        consolidateTaskParams[2] = ConsolidateTaskParam("fromAddr3", TICKER, CHAIN_ID, 3.3 ether);
+        consolidateTaskParams[0] = ConsolidateTaskParam(
+            "fromAddr1",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            "consolidate txHash1"
+        );
+        consolidateTaskParams[1] = ConsolidateTaskParam(
+            "fromAddr2",
+            TICKER,
+            CHAIN_ID,
+            2.5 ether,
+            "consolidate txHash2"
+        );
+        consolidateTaskParams[2] = ConsolidateTaskParam(
+            "fromAddr3",
+            TICKER,
+            CHAIN_ID,
+            3.3 ether,
+            "consolidate txHash3"
+        );
         assetHandler.submitConsolidateTask(consolidateTaskParams);
         assetHandler.consolidate(consolidateTaskParams[0]);
         assetHandler.consolidate(consolidateTaskParams[1]);
