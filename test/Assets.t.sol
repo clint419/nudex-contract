@@ -15,27 +15,25 @@ contract AssetsTest is BaseTest {
 
     AssetHandlerUpgradeable public assetHandler;
 
-    address public ahProxy;
-
     function setUp() public override {
         super.setUp();
 
         // setup assetHandler
-        ahProxy = _deployProxy(
+        address assetHandlerProxy = _deployProxy(
             address(new AssetHandlerUpgradeable(address(taskManager))),
             daoContract
         );
-        assetHandler = AssetHandlerUpgradeable(ahProxy);
-        assetHandler.initialize(daoContract, vmProxy, msgSender);
+        assetHandler = AssetHandlerUpgradeable(assetHandlerProxy);
+        assetHandler.initialize(daoContract, entryPointProxy, msgSender);
 
         // assign handlers
         vm.prank(daoContract);
         assetHandler.grantRole(FUNDS_ROLE, msgSender);
-        handlers.push(ahProxy);
-        taskManager.initialize(daoContract, vmProxy, handlers);
+        handlers.push(assetHandlerProxy);
+        taskManager.initialize(daoContract, entryPointProxy, handlers);
 
         // list new asset and token
-        vm.startPrank(vmProxy);
+        vm.startPrank(entryPointProxy);
         AssetParam memory assetParam = AssetParam(
             18,
             true,

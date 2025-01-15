@@ -39,12 +39,12 @@ contract ParticipantTest is BaseTest {
         participants[1] = participant1;
         // must have at least 3 participants
         vm.expectRevert(IParticipantHandler.NotEnoughParticipant.selector);
-        participantHandler.initialize(daoContract, vmProxy, msgSender, participants);
+        participantHandler.initialize(daoContract, entryPointProxy, msgSender, participants);
         participants = new address[](3);
         participants[0] = msgSender;
         participants[1] = participant1;
         participants[2] = participant2;
-        participantHandler.initialize(daoContract, vmProxy, msgSender, participants);
+        participantHandler.initialize(daoContract, entryPointProxy, msgSender, participants);
         assertEq(participantHandler.getParticipants().length, 3);
 
         assert(
@@ -55,7 +55,7 @@ contract ParticipantTest is BaseTest {
 
         // assign handlers
         handlers.push(participantHandlerProxy);
-        taskManager.initialize(daoContract, vmProxy, handlers);
+        taskManager.initialize(daoContract, entryPointProxy, handlers);
     }
 
     function test_AddParticipant() public {

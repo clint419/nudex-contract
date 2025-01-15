@@ -21,7 +21,7 @@ contract MockData is Script {
     address public deployer;
 
     TaskManagerUpgradeable taskManager;
-    AccountHandlerUpgradeable accountManager;
+    AccountHandlerUpgradeable accountHandler;
     AssetHandlerUpgradeable assetHandler;
     FundsHandlerUpgradeable fundsHandler;
 
@@ -36,13 +36,13 @@ contract MockData is Script {
         taskManager = new TaskManagerUpgradeable();
         console.log("|TaskManager|", address(taskManager));
 
-        // deploy accountManager
-        accountManager = new AccountHandlerUpgradeable(address(taskManager));
-        // NuvoProxy proxy = new NuvoProxy(address(accountManager), vm.envAddress("PARTICIPANT_2"));
-        // accountManager = AccountHandlerUpgradeable(address(proxy));
-        accountManager.initialize(deployer, deployer, deployer);
-        handlers.push(address(accountManager));
-        console.log("|AccountHandler|", address(accountManager));
+        // deploy accountHandler
+        accountHandler = new AccountHandlerUpgradeable(address(taskManager));
+        // NuvoProxy proxy = new NuvoProxy(address(accountHandler), vm.envAddress("PARTICIPANT_2"));
+        // accountHandler = AccountHandlerUpgradeable(address(proxy));
+        accountHandler.initialize(deployer, deployer, deployer);
+        handlers.push(address(accountHandler));
+        console.log("|AccountHandler|", address(accountHandler));
 
         // deploy assetHandler
         assetHandler = new AssetHandlerUpgradeable(address(taskManager));
@@ -144,7 +144,7 @@ contract MockData is Script {
 
     function accountData() public {
         for (uint8 i; i < 5; ++i) {
-            accountManager.registerNewAddress(
+            accountHandler.registerNewAddress(
                 deployer,
                 10001 + i,
                 IAccountHandler.AddressCategory.EVM,
@@ -153,21 +153,21 @@ contract MockData is Script {
             );
         }
 
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10001,
             IAccountHandler.AddressCategory.BTC,
             0,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR"
         );
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10002,
             IAccountHandler.AddressCategory.BTC,
             1,
             "1HkJEUpgptueutWRFB1bjHGKA5wtKBoToW"
         );
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10003,
             IAccountHandler.AddressCategory.BTC,
@@ -175,21 +175,21 @@ contract MockData is Script {
             "1PS21zbYxJZUzsHg91MfxUDbqkn7BEw2C5"
         );
 
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10001,
             IAccountHandler.AddressCategory.SOL,
             0,
             "w9A6215VdjCgX9BVwK1ZXE7sKBuNGh7bdmeGBEs7625"
         );
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10002,
             IAccountHandler.AddressCategory.SOL,
             1,
             "4WMARsRWo8x7oJRwTQ9LhbDuiAnzz5TF3WzpTCgACrfe"
         );
-        accountManager.registerNewAddress(
+        accountHandler.registerNewAddress(
             deployer,
             10003,
             IAccountHandler.AddressCategory.SOL,

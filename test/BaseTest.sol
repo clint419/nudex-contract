@@ -31,7 +31,7 @@ contract BaseTest is Test {
     TaskManagerUpgradeable public taskManager;
     EntryPointUpgradeable public entryPoint;
 
-    address public vmProxy;
+    address public entryPointProxy;
     address public daoContract;
     address public thisAddr;
     address public msgSender;
@@ -53,8 +53,8 @@ contract BaseTest is Test {
         nuvoToken.mint(msgSender, 100 ether);
 
         // deploy entryPoint proxy
-        vmProxy = _deployProxy(address(new EntryPointUpgradeable()), daoContract);
-        entryPoint = EntryPointUpgradeable(vmProxy);
+        entryPointProxy = _deployProxy(address(new EntryPointUpgradeable()), daoContract);
+        entryPoint = EntryPointUpgradeable(entryPointProxy);
 
         // deploy NuvoLockUpgradeable
         address nuvoLockProxy = _deployProxy(
@@ -62,9 +62,15 @@ contract BaseTest is Test {
             daoContract
         );
         nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
-        nuvoLock.initialize(msgSender, msgSender, vmProxy, MIN_LOCK_AMOUNT, MIN_LOCK_PERIOD);
+        nuvoLock.initialize(
+            msgSender,
+            msgSender,
+            entryPointProxy,
+            MIN_LOCK_AMOUNT,
+            MIN_LOCK_PERIOD
+        );
         assertTrue(nuvoLock.hasRole(0x00, msgSender));
-        assertTrue(nuvoLock.hasRole(ENTRYPOINT_ROLE, vmProxy));
+        assertTrue(nuvoLock.hasRole(ENTRYPOINT_ROLE, entryPointProxy));
 
         // deploy taskManager
         address tmProxy = _deployProxy(address(new TaskManagerUpgradeable()), daoContract);
@@ -80,8 +86,8 @@ contract BaseTest is Test {
         participants[0] = msgSender;
         participants[1] = msgSender;
         participants[2] = msgSender;
-        participantHandler.initialize(daoContract, vmProxy, msgSender, participants);
-        assertTrue(participantHandler.hasRole(ENTRYPOINT_ROLE, vmProxy));
+        participantHandler.initialize(daoContract, entryPointProxy, msgSender, participants);
+        assertTrue(participantHandler.hasRole(ENTRYPOINT_ROLE, entryPointProxy));
 
         // setups
         vm.startPrank(msgSender);

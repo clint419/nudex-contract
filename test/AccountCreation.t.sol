@@ -12,24 +12,23 @@ contract AccountCreationTest is BaseTest {
     string public depositAddress;
 
     AccountHandlerUpgradeable public accountHandler;
-    address public amProxy;
 
     function setUp() public override {
         super.setUp();
         depositAddress = "new_address";
 
         // deploy accountHandler
-        amProxy = _deployProxy(
+        address accountHandlerProxy = _deployProxy(
             address(new AccountHandlerUpgradeable(address(taskManager))),
             daoContract
         );
-        accountHandler = AccountHandlerUpgradeable(amProxy);
-        accountHandler.initialize(daoContract, vmProxy, msgSender);
-        assertTrue(accountHandler.hasRole(ENTRYPOINT_ROLE, vmProxy));
+        accountHandler = AccountHandlerUpgradeable(accountHandlerProxy);
+        accountHandler.initialize(daoContract, entryPointProxy, msgSender);
+        assertTrue(accountHandler.hasRole(ENTRYPOINT_ROLE, entryPointProxy));
 
         // assign handlers
-        handlers.push(amProxy);
-        taskManager.initialize(daoContract, vmProxy, handlers);
+        handlers.push(accountHandlerProxy);
+        taskManager.initialize(daoContract, entryPointProxy, handlers);
     }
 
     function test_Create() public {
@@ -114,7 +113,7 @@ contract AccountCreationTest is BaseTest {
         vm.stopPrank();
 
         // fail case: deposit address as address zero
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         vm.expectRevert(IAccountHandler.InvalidAddress.selector);
         accountHandler.registerNewAddress(
             msgSender,

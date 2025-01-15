@@ -15,9 +15,10 @@ import {EntryPointUpgradeable} from "../src/EntryPointUpgradeable.sol";
 
 // this contract is only used for contract testing
 contract DeployTest is Script {
-    address deployer;
     address daoContract;
     address tssSigner;
+    address deployer;
+    address submitter;
     address[] initialParticipants;
     address[] handlers;
 
@@ -33,9 +34,10 @@ contract DeployTest is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.createWallet(deployerPrivateKey).addr;
         console.log("Deployer address: ", deployer);
+
         vm.startBroadcast(deployerPrivateKey);
 
-        setupParticipant(false);
+        setupParticipant(true);
         deploy(true);
 
         vm.stopBroadcast();
@@ -43,16 +45,19 @@ contract DeployTest is Script {
 
     function setupParticipant(bool _fromEnv) public {
         if (_fromEnv) {
-            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
+            submitter = vm.envAddress("PARTICIPANT_1");
+            initialParticipants.push(submitter);
+            initialParticipants.push(submitter);
+            initialParticipants.push(submitter);
+            console.log("\nSubmitter: ", submitter);
         } else {
             (address participant1, uint256 key1) = makeAddrAndKey("participant1");
             initialParticipants.push(participant1);
             initialParticipants.push(participant1);
             initialParticipants.push(participant1);
-            console.log("\nParticipant: ", participant1);
+            console.log("\nSubmitter: ", participant1);
             console.logBytes32(bytes32(key1));
+            submitter = participant1;
         }
     }
 
@@ -64,7 +69,7 @@ contract DeployTest is Script {
             entryPointAddr = address(entryPoint);
             console.log("\n  |EntryPoint| ", entryPointAddr);
         } else {
-            entryPointAddr = deployer;
+            entryPointAddr = submitter;
         }
 
         MockNuvoToken nuvoToken = new MockNuvoToken();
@@ -79,37 +84,37 @@ contract DeployTest is Script {
         TaskManagerUpgradeable taskManager = new TaskManagerUpgradeable();
         console.log("|TaskManager|", address(taskManager));
 
-        // deploy participantManager
-        ParticipantHandlerUpgradeable participantManager = new ParticipantHandlerUpgradeable(
+        // deploy participantHandler
+        ParticipantHandlerUpgradeable participantHandler = new ParticipantHandlerUpgradeable(
             address(nuvoLock),
             address(taskManager)
         );
-        participantManager.initialize(daoContract, entryPointAddr, deployer, initialParticipants);
-        handlers.push(address(participantManager));
-        console.log("|ParticipantHandler|", address(participantManager));
+        participantHandler.initialize(daoContract, entryPointAddr, submitter, initialParticipants);
+        handlers.push(address(participantHandler));
+        console.log("|ParticipantHandler|", address(participantHandler));
 
-        // deploy accountManager
-        AccountHandlerUpgradeable accountManager = new AccountHandlerUpgradeable(
+        // deploy accountHandler
+        AccountHandlerUpgradeable accountHandler = new AccountHandlerUpgradeable(
             address(taskManager)
         );
-        accountManager.initialize(daoContract, entryPointAddr, deployer);
-        handlers.push(address(accountManager));
-        console.log("|AccountHandler|", address(accountManager));
+        accountHandler.initialize(daoContract, entryPointAddr, submitter);
+        handlers.push(address(accountHandler));
+        console.log("|AccountHandler|", address(accountHandler));
 
-        // deploy accountManager
+        // deploy accountHandler
         AssetHandlerUpgradeable assetHandler = new AssetHandlerUpgradeable(address(taskManager));
-        assetHandler.initialize(daoContract, entryPointAddr, deployer);
+        assetHandler.initialize(daoContract, entryPointAddr, submitter);
         handlers.push(address(assetHandler));
         console.log("|AssetHandler|", address(assetHandler));
 
-        // deploy depositManager
-        FundsHandlerUpgradeable depositManager = new FundsHandlerUpgradeable(
+        // deploy fundsHandler
+        FundsHandlerUpgradeable fundsHandler = new FundsHandlerUpgradeable(
             address(assetHandler),
             address(taskManager)
         );
-        depositManager.initialize(daoContract, entryPointAddr, deployer);
-        handlers.push(address(depositManager));
-        console.log("|FundsHandler|", address(depositManager));
+        fundsHandler.initialize(daoContract, entryPointAddr, submitter);
+        handlers.push(address(fundsHandler));
+        console.log("|FundsHandler|", address(fundsHandler));
 
         // initialize entryPoint link to all contracts
         taskManager.initialize(daoContract, entryPointAddr, handlers);
@@ -117,7 +122,7 @@ contract DeployTest is Script {
             EntryPointUpgradeable entryPoint = EntryPointUpgradeable(entryPointAddr);
             entryPoint.initialize(
                 tssSigner, // tssSigner
-                address(participantManager), // participantManager
+                address(participantHandler), // participantHandler
                 address(taskManager), // taskManager
                 address(nuvoLock) // nuvoLock
             );

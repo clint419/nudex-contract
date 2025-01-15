@@ -20,11 +20,17 @@ contract NuvoLockTest is BaseTest {
             daoContract
         );
         nuvoLock = NuvoLockUpgradeable(nuvoLockProxy);
-        nuvoLock.initialize(rewardSource, msgSender, vmProxy, MIN_LOCK_AMOUNT, MIN_LOCK_PERIOD);
+        nuvoLock.initialize(
+            rewardSource,
+            msgSender,
+            entryPointProxy,
+            MIN_LOCK_AMOUNT,
+            MIN_LOCK_PERIOD
+        );
         vm.prank(rewardSource);
         nuvoToken.approve(nuvoLockProxy, 100 ether);
 
-        taskManager.initialize(daoContract, vmProxy, handlers);
+        taskManager.initialize(daoContract, entryPointProxy, handlers);
     }
 
     function test_Lock() public {
@@ -285,7 +291,7 @@ contract NuvoLockTest is BaseTest {
             lastPeriodNumber < nuvoLock.getCurrentPeriod() &&
                 nuvoLock.rewardPerPeriod(lastPeriodNumber) > 0
         );
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         nuvoLock.accumulateBonusPoints(msgSender, 1);
         {
             (, , , , , uint256 bonusPoints, uint256 accumulatedRewards, ) = nuvoLock.locks(
@@ -315,9 +321,9 @@ contract NuvoLockTest is BaseTest {
 
         // when demeritPoint is applied
         vm.revertTo(snapshot);
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         nuvoLock.accumulateBonusPoints(msgSender, 1);
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         nuvoLock.accumulateDemeritPoints(msgSender, 1);
         {
             (, , , , , uint256 bonusPoints, , uint256 demeritPoints) = nuvoLock.locks(msgSender);

@@ -58,13 +58,13 @@ contract Deploy is Script {
         tmProxy = deployProxy(address(new TaskManagerUpgradeable()), daoContract);
         TaskManagerUpgradeable taskManager = TaskManagerUpgradeable(tmProxy);
 
-        // deploy participantManager
+        // deploy participantHandler
         pmProxy = deployProxy(
             address(new ParticipantHandlerUpgradeable(lockProxy, tmProxy)),
             daoContract
         );
-        ParticipantHandlerUpgradeable participantManager = ParticipantHandlerUpgradeable(pmProxy);
-        participantManager.initialize(daoContract, vmProxy, deployer, initialParticipants);
+        ParticipantHandlerUpgradeable participantHandler = ParticipantHandlerUpgradeable(pmProxy);
+        participantHandler.initialize(daoContract, vmProxy, deployer, initialParticipants);
         handlers.push(pmProxy);
 
         // deploy assetHandler
@@ -73,16 +73,16 @@ contract Deploy is Script {
         assetHandler.initialize(daoContract, vmProxy, deployer);
         handlers.push(ahProxy);
 
-        // deploy accountManager
+        // deploy accountHandler
         amProxy = deployProxy(address(new AccountHandlerUpgradeable(tmProxy)), daoContract);
-        AccountHandlerUpgradeable accountManager = AccountHandlerUpgradeable(amProxy);
-        accountManager.initialize(daoContract, vmProxy, deployer);
+        AccountHandlerUpgradeable accountHandler = AccountHandlerUpgradeable(amProxy);
+        accountHandler.initialize(daoContract, vmProxy, deployer);
         handlers.push(amProxy);
 
-        // deploy depositManager
+        // deploy fundsHandler
         dmProxy = deployProxy(address(new FundsHandlerUpgradeable(ahProxy, tmProxy)), daoContract);
-        FundsHandlerUpgradeable depositManager = FundsHandlerUpgradeable(dmProxy);
-        depositManager.initialize(daoContract, vmProxy, deployer);
+        FundsHandlerUpgradeable fundsHandler = FundsHandlerUpgradeable(dmProxy);
+        fundsHandler.initialize(daoContract, vmProxy, deployer);
         handlers.push(dmProxy);
 
         // initialize entryPoint link to all contracts
@@ -90,7 +90,7 @@ contract Deploy is Script {
         EntryPointUpgradeable entryPoint = EntryPointUpgradeable(vmProxy);
         entryPoint.initialize(
             tssSigner, // tssSigner
-            pmProxy, // participantManager
+            pmProxy, // participantHandler
             tmProxy, // taskManager
             lockProxy // nuvoLock
         );

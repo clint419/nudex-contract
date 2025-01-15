@@ -17,7 +17,6 @@ contract FundsTest is BaseTest {
     uint256 public constant MIN_WITHDRAW_AMOUNT = 50;
     uint256 public constant DEFAULT_AMOUNT = 1 ether;
 
-    address public dmProxy;
     FundsHandlerUpgradeable public fundsHandler;
 
     DepositInfo[] public depositTaskParams;
@@ -46,18 +45,18 @@ contract FundsTest is BaseTest {
         testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
         assetHandler.linkToken(TICKER, testTokenInfo);
         // deploy fundsHandler
-        dmProxy = _deployProxy(
+        address fundsHandlerProxy = _deployProxy(
             address(new FundsHandlerUpgradeable(ahProxy, address(taskManager))),
             daoContract
         );
-        fundsHandler = FundsHandlerUpgradeable(dmProxy);
-        fundsHandler.initialize(daoContract, vmProxy, msgSender);
-        assertTrue(fundsHandler.hasRole(ENTRYPOINT_ROLE, vmProxy));
+        fundsHandler = FundsHandlerUpgradeable(fundsHandlerProxy);
+        fundsHandler.initialize(daoContract, entryPointProxy, msgSender);
+        assertTrue(fundsHandler.hasRole(ENTRYPOINT_ROLE, entryPointProxy));
 
         // assign handlers
-        assetHandler.grantRole(FUNDS_ROLE, dmProxy);
-        handlers.push(dmProxy);
-        taskManager.initialize(daoContract, vmProxy, handlers);
+        assetHandler.grantRole(FUNDS_ROLE, fundsHandlerProxy);
+        handlers.push(fundsHandlerProxy);
+        taskManager.initialize(daoContract, entryPointProxy, handlers);
 
         // default task param
         depositTaskParams.push(
@@ -160,7 +159,7 @@ contract FundsTest is BaseTest {
         fundsHandler.submitDepositTask(depositTaskParams);
         vm.stopPrank();
 
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         fundsHandler.setPauseState(TICKER, true);
         vm.expectRevert(IFundsHandler.Paused.selector);
         vm.prank(msgSender);
@@ -313,7 +312,7 @@ contract FundsTest is BaseTest {
         vm.stopPrank();
 
         // fail case: paused
-        vm.prank(vmProxy);
+        vm.prank(entryPointProxy);
         fundsHandler.setPauseState(TICKER, true);
         withdrawTaskParams[0].userAddress = msgSender;
         vm.expectRevert(IFundsHandler.Paused.selector);
