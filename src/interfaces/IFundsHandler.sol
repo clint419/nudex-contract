@@ -22,6 +22,8 @@ struct WithdrawalInfo {
 
 interface IFundsHandler {
     event NewPauseState(bytes32 indexed condition, bool indexed newState);
+    event DepositRequested(DepositInfo depositInfo);
+    event WithdrawalRequested(WithdrawalInfo withdrawalInfo);
     event DepositRecorded(
         address indexed userAddress,
         bytes32 indexed ticker,

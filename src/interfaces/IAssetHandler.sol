@@ -11,12 +11,11 @@ struct AssetParam {
 }
 
 struct TransferParam {
-    bytes32 ticker;
-    uint64 chainId;
     string fromAddress;
     string toAddress;
+    bytes32 ticker;
+    uint64 chainId;
     uint256 amount;
-    string txHash;
 }
 
 struct ConsolidateTaskParam {
@@ -24,7 +23,6 @@ struct ConsolidateTaskParam {
     bytes32 ticker;
     uint64 chainId;
     uint256 amount;
-    string txHash;
 }
 
 struct NudexAsset {
@@ -51,18 +49,30 @@ struct TokenInfo {
 
 interface IAssetHandler {
     // events
+    event RequestUpdateAsset(bytes32 indexed ticker, bytes callData);
     event AssetListed(bytes32 indexed ticker, AssetParam assetParam);
     event AssetUpdated(bytes32 indexed ticker, AssetParam assetParam);
     event AssetDelisted(bytes32 indexed ticker);
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
-    event Transfer(uint64 indexed chainId, string fromAddress, string toAddress, uint256 amount);
+
+    event RequestTransfer(TransferParam param);
+    event Transfer(
+        bytes32 indexed ticker,
+        uint64 indexed chainId,
+        string fromAddress,
+        string toAddress,
+        uint256 amount,
+        string txHash
+    );
+    event RequestConsolidate(ConsolidateTaskParam param);
     event Consolidate(
         bytes32 indexed ticker,
         uint64 indexed chainId,
         string fromAddress,
-        uint256 amount
+        uint256 amount,
+        string txHash
     );
     event Withdraw(bytes32 indexed ticker, uint64 indexed chainId, uint256 amount);
 

@@ -84,7 +84,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             result: _data
         });
 
-        emit TaskSubmitted(taskId, _submitter, _data);
+        emit TaskSubmitted(taskId, _submitter, msg.sender);
         return taskId;
     }
 

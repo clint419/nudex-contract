@@ -19,7 +19,7 @@ struct Task {
 }
 
 interface ITaskManager {
-    event TaskSubmitted(uint64 indexed taskId, address indexed submitter, bytes data);
+    event TaskSubmitted(uint64 indexed taskId, address indexed submitter, address indexed handler);
     event TaskUpdated(
         uint64 indexed taskId,
         address indexed submitter,

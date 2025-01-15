@@ -10,6 +10,13 @@ interface IAccountHandler {
         EVM_TSS
     }
 
+    // events
+    event RequestRegisterAddress(
+        address indexed userAddr,
+        uint32 indexed account,
+        AddressCategory indexed chain,
+        uint32 index
+    );
     event AddressRegistered(
         address userAddr,
         uint256 indexed account,
@@ -18,10 +25,12 @@ interface IAccountHandler {
         string newAddress
     );
 
+    // errors
     error InvalidAddress();
     error InvalidUserAddress();
     error InvalidAccountNumber(uint);
     error InvalidInput();
+    error MismatchedAccount(uint32);
     error RegisteredAccount(uint256, string);
 
     function addressRecord(bytes32 _input) external view returns (string memory);

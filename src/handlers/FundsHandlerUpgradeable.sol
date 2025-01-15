@@ -76,7 +76,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * chainId The chain id of the asset.
      * amount The amount to deposit.
      */
-    function submitDepositTask(DepositInfo[] calldata _params) external onlyRole(SUBMITTER_ROLE) {
+    function submitDepositTask(
+        DepositInfo[] calldata _params
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -88,7 +91,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 InvalidAmount()
             );
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
-            taskManager.submitTask(
+            emit DepositRequested(_params[i]);
+            taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
@@ -127,7 +131,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      */
     function submitWithdrawTask(
         WithdrawalInfo[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) {
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -144,7 +149,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
-            taskManager.submitTask(
+            emit WithdrawalRequested(_params[i]);
+            taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(
                     this.recordWithdrawal.selector,
