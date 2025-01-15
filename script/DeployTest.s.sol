@@ -38,7 +38,11 @@ contract DeployTest is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         setupParticipant(true);
-        deploy(true);
+        deploy(
+            address(0xD7Bf3503C856c18eCb07eAf72E45E37f9Ab68A5B),
+            address(0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df),
+            address(0xc8006AAD20e8D15C7B3F8b45f309864034b9156B)
+        );
 
         vm.stopBroadcast();
     }
@@ -61,24 +65,31 @@ contract DeployTest is Script {
         }
     }
 
-    function deploy(bool _useEntryPoint) public {
+    function deploy(address _entryPoint, address _nuvoToken, address _nuvoLock) public {
         address entryPointAddr;
-        if (_useEntryPoint) {
+        if (_entryPoint == address(0)) {
             // deploy entryPoint proxy
             EntryPointUpgradeable entryPoint = new EntryPointUpgradeable();
             entryPointAddr = address(entryPoint);
             console.log("\n  |EntryPoint| ", entryPointAddr);
         } else {
-            entryPointAddr = submitter;
+            entryPointAddr = _entryPoint;
         }
 
-        MockNuvoToken nuvoToken = new MockNuvoToken();
-        console.log("|NuvoToken|", address(nuvoToken));
+        // deploy nuvoToken
+        if (_nuvoToken == address(0)) {
+            MockNuvoToken nuvoToken = new MockNuvoToken();
+            console.log("|NuvoToken|", address(nuvoToken));
+            _nuvoToken = address(nuvoToken);
+        }
 
         // deploy nuvoLock
-        NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable(address(nuvoToken));
-        nuvoLock.initialize(deployer, daoContract, entryPointAddr, 300, 10);
-        console.log("|NuvoLock|", address(nuvoLock));
+        if (_nuvoLock == address(0)) {
+            NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable(_nuvoToken);
+            nuvoLock.initialize(deployer, daoContract, entryPointAddr, 300, 10);
+            console.log("|NuvoLock|", address(nuvoLock));
+            _nuvoLock = address(nuvoLock);
+        }
 
         // deploy taskManager
         TaskManagerUpgradeable taskManager = new TaskManagerUpgradeable();
@@ -86,7 +97,7 @@ contract DeployTest is Script {
 
         // deploy participantHandler
         ParticipantHandlerUpgradeable participantHandler = new ParticipantHandlerUpgradeable(
-            address(nuvoLock),
+            _nuvoLock,
             address(taskManager)
         );
         participantHandler.initialize(daoContract, entryPointAddr, submitter, initialParticipants);
@@ -118,13 +129,13 @@ contract DeployTest is Script {
 
         // initialize entryPoint link to all contracts
         taskManager.initialize(daoContract, entryPointAddr, handlers);
-        if (_useEntryPoint) {
+        if (_entryPoint == address(0)) {
             EntryPointUpgradeable entryPoint = EntryPointUpgradeable(entryPointAddr);
             entryPoint.initialize(
                 tssSigner, // tssSigner
                 address(participantHandler), // participantHandler
                 address(taskManager), // taskManager
-                address(nuvoLock) // nuvoLock
+                _nuvoLock // nuvoLock
             );
         }
     }

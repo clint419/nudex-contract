@@ -13,14 +13,14 @@ import {ITaskManager, State, Task} from "./interfaces/ITaskManager.sol";
  * @dev Manage all onchain information.
  */
 contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpgradeable {
+    uint256 public constant FORCE_ROTATION_WINDOW = 1 minutes;
+    uint256 public constant MAX_OPT_COUNT = 256;
+
     IParticipantHandler public participantHandler;
     ITaskManager public taskManager;
     INuvoLock public nuvoLock;
 
     uint256 public lastSubmissionTime;
-    uint256 public constant FORCE_ROTATION_WINDOW = 1 minutes;
-    uint256 public constant MAX_OPT_COUNT = 256;
-
     uint256 public tssNonce;
     address public tssSigner;
     address public nextSubmitter;
