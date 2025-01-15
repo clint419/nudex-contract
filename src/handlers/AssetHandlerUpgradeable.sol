@@ -13,7 +13,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     mapping(bytes32 ticker => uint64[] chainIds) public linkedTokenList;
     mapping(bytes32 ticker => mapping(uint64 chainId => TokenInfo)) public linkedTokens;
     mapping(bytes32 ticker => mapping(uint64 chainId => ConsolidateTaskParam[]))
-        public consolidateHistory;
+        public consolidateRecords;
 
     modifier checkListing(bytes32 _ticker) {
         require(nudexAssets[_ticker].isListed, AssetNotListed(_ticker));
@@ -103,6 +103,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         bytes calldata _callData
     ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64) {
+        emit RequestUpdateAsset(_ticker, _callData);
         return taskManager.submitTask(msg.sender, _callData);
     }
 
@@ -185,12 +186,15 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      */
     function submitTransferTask(
         TransferParam[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) {
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(bytes(_params[i].fromAddress).length > 0, InvalidAddress());
             require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
             require(_params[i].amount > 0, InvalidAmount());
-            taskManager.submitTask(
+
+            emit RequestTransfer(_params[i]);
+            taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(this.transfer.selector, _params[i])
             );
@@ -201,9 +205,14 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      * @dev Transfer the asset
      */
     function transfer(
-        TransferParam calldata _param
-    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
-        emit Transfer(_param.chainId, _param.fromAddress, _param.toAddress, _param.amount);
+        string calldata _fromAddress,
+        string calldata _toAddress,
+        bytes32 _ticker,
+        uint64 _chainId,
+        uint256 _amount,
+        string calldata _txHash
+    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
+        emit Transfer(_ticker, _chainId, _fromAddress, _toAddress, _amount, _txHash);
     }
 
     /**
@@ -216,13 +225,15 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      */
     function submitConsolidateTask(
         ConsolidateTaskParam[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) {
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
                 "Below minimum amount"
             );
-            taskManager.submitTask(
+            emit RequestConsolidate(_params[i]);
+            taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(this.consolidate.selector, _params[i])
             );
@@ -233,10 +244,16 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
      * @dev Consolidate the token
      */
     function consolidate(
-        ConsolidateTaskParam calldata _param
-    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_param.ticker) {
-        consolidateHistory[_param.ticker][_param.chainId].push(_param);
-        emit Consolidate(_param.ticker, _param.chainId, _param.fromAddress, _param.amount);
+        string calldata _fromAddress,
+        bytes32 _ticker,
+        uint64 _chainId,
+        uint256 _amount,
+        string calldata _txHash
+    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
+        consolidateRecords[_ticker][_chainId].push(
+            ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount)
+        );
+        emit Consolidate(_ticker, _chainId, _fromAddress, _amount, _txHash);
     }
 
     /**
