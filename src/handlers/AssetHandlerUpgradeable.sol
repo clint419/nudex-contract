@@ -189,14 +189,24 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
-            require(bytes(_params[i].fromAddress).length > 0, InvalidAddress());
-            require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
+            require(
+                bytes(_params[i].fromAddress).length > 0 && bytes(_params[i].toAddress).length > 0,
+                InvalidAddress()
+            );
             require(_params[i].amount > 0, InvalidAmount());
 
             emit RequestTransfer(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.transfer.selector, _params[i])
+                abi.encodeWithSelector(
+                    this.transfer.selector,
+                    _params[i].fromAddress,
+                    _params[i].toAddress,
+                    _params[i].ticker,
+                    _params[i].chainId,
+                    _params[i].amount,
+                    uint256(320) // offset for txHash
+                )
             );
         }
     }
@@ -228,14 +238,22 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
+            require(bytes(_params[i].fromAddress).length > 0, InvalidAddress());
             require(
                 _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
-                "Below minimum amount"
+                InvalidAmount()
             );
             emit RequestConsolidate(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.consolidate.selector, _params[i])
+                abi.encodeWithSelector(
+                    this.consolidate.selector,
+                    _params[i].fromAddress,
+                    _params[i].ticker,
+                    _params[i].chainId,
+                    _params[i].amount,
+                    uint256(224) // offset for txHash
+                )
             );
         }
     }

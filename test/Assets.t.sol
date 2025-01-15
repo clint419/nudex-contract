@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "./BaseTest.sol";
 
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {IAssetHandler, AssetParam, ConsolidateTaskParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, ConsolidateTaskParam, TransferParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
 import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 
 contract AssetsTest is BaseTest {
@@ -135,18 +135,76 @@ contract AssetsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_ListAsset() public {
+    function test_Consolidate() public {
         vm.startPrank(msgSender);
+        string memory fromAddr = "0xFromAddress";
+        uint256 amount = 1 ether;
+        string memory txHash = "consolidate_txHash";
         ConsolidateTaskParam[] memory consolidateParams = new ConsolidateTaskParam[](1);
-        consolidateParams[0] = ConsolidateTaskParam(
-            "0xFromAddress",
-            TICKER,
-            CHAIN_ID,
-            1 ether,
-            "txHash"
-        );
+
+        // empty from address
+        consolidateParams[0] = ConsolidateTaskParam("", TICKER, CHAIN_ID, amount);
+        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
         assetHandler.submitConsolidateTask(consolidateParams);
+
+        // below minimum amount
+        consolidateParams[0] = ConsolidateTaskParam(fromAddr, TICKER, CHAIN_ID, 0);
+        vm.expectRevert(IAssetHandler.InvalidAmount.selector);
+        assetHandler.submitConsolidateTask(consolidateParams);
+
+        // correct amount
+        consolidateParams[0] = ConsolidateTaskParam(fromAddr, TICKER, CHAIN_ID, amount);
+        assetHandler.submitConsolidateTask(consolidateParams);
+        taskOpts[0].extraData = abi.encode(bytes(txHash).length, bytes32(bytes(txHash)));
         signature = _generateOptSignature(taskOpts, tssKey);
+
+        vm.expectEmit(true, true, true, true);
+        emit IAssetHandler.Consolidate(TICKER, CHAIN_ID, fromAddr, amount, txHash);
+        entryPoint.verifyAndCall(taskOpts, signature);
+        (
+            string memory tempAddr,
+            bytes32 tempTicker,
+            uint64 tempChainId,
+            uint256 tempAmount
+        ) = assetHandler.consolidateRecords(TICKER, CHAIN_ID, 0);
+        assertEq(
+            abi.encode(tempAddr, tempTicker, tempChainId, tempAmount),
+            abi.encode(fromAddr, TICKER, CHAIN_ID, amount)
+        );
+        vm.stopPrank();
+    }
+
+    function test_Transfer() public {
+        vm.startPrank(msgSender);
+        string memory fromAddr = "0xFromAddress";
+        string memory toAddr = "0xToAddress";
+        uint256 amount = 1 ether;
+        string memory txHash = "transfer_txHash";
+        TransferParam[] memory transferParams = new TransferParam[](1);
+
+        // empty from address
+        transferParams[0] = TransferParam("", toAddr, TICKER, CHAIN_ID, amount);
+        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
+        assetHandler.submitTransferTask(transferParams);
+
+        // empty from address
+        transferParams[0] = TransferParam(fromAddr, "", TICKER, CHAIN_ID, amount);
+        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
+        assetHandler.submitTransferTask(transferParams);
+
+        // below minimum amount
+        transferParams[0] = TransferParam(fromAddr, toAddr, TICKER, CHAIN_ID, 0);
+        vm.expectRevert(IAssetHandler.InvalidAmount.selector);
+        assetHandler.submitTransferTask(transferParams);
+
+        // correct amount
+        transferParams[0] = TransferParam(fromAddr, toAddr, TICKER, CHAIN_ID, amount);
+        assetHandler.submitTransferTask(transferParams);
+        taskOpts[0].extraData = abi.encode(bytes(txHash).length, bytes32(bytes(txHash)));
+        signature = _generateOptSignature(taskOpts, tssKey);
+
+        vm.expectEmit(true, true, true, true);
+        emit IAssetHandler.Transfer(TICKER, CHAIN_ID, fromAddr, toAddr, amount, txHash);
         entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();
     }
