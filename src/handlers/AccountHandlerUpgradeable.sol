@@ -51,12 +51,17 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         require(_userAddr != address(0), InvalidUserAddress());
         require(_account > 10000, InvalidAccountNumber(_account));
         require(
+            userAccounts[_userAddr] == 0 || userAccounts[_userAddr] == _account,
+            MismatchedAccount(userAccounts[_userAddr])
+        );
+        require(
             bytes(addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))]).length == 0,
             RegisteredAccount(
                 _account,
                 addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))]
             )
         );
+        emit RequestRegisterAddress(_userAddr, _account, _chain, _index);
         return
             taskManager.submitTask(
                 msg.sender,
@@ -86,7 +91,9 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         string calldata _address
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(bytes(_address).length > 0, InvalidAddress());
-        userAccounts[_userAddr] = _account;
+        if (userAccounts[_userAddr] == 0) {
+            userAccounts[_userAddr] = _account;
+        }
         userMapping[_address][_chain] = _userAddr;
         addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))] = _address;
         emit AddressRegistered(_userAddr, _account, _chain, _index, _address);
