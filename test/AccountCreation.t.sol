@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "./BaseTest.sol";
 
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
-import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
+import {IAccountHandler, AddressCategory, AccountRegistrationTaskParam} from "../src/interfaces/IAccountHandler.sol";
 import {ITaskManager, State} from "../src/interfaces/ITaskManager.sol";
 
 contract AccountCreationTest is BaseTest {
@@ -34,41 +34,30 @@ contract AccountCreationTest is BaseTest {
     function test_Create() public {
         vm.startPrank(msgSender);
         // submit task
-        taskOpts[0].taskId = accountHandler.submitRegisterTask(
+        AccountRegistrationTaskParam[] memory taskParams = new AccountRegistrationTaskParam[](1);
+        taskParams[0] = AccountRegistrationTaskParam(
             msgSender,
             DEFAULT_ACCOUNT,
-            IAccountHandler.AddressCategory.BTC,
+            AddressCategory.BTC,
             0
         );
+        accountHandler.submitRegisterTask(taskParams);
         taskOpts[0].extraData = offsetString(depositAddress);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
         // check mappings|reverseMapping
         assertEq(
-            accountHandler.getAddressRecord(
-                DEFAULT_ACCOUNT,
-                IAccountHandler.AddressCategory.BTC,
-                uint32(0)
-            ),
+            accountHandler.getAddressRecord(DEFAULT_ACCOUNT, AddressCategory.BTC, uint32(0)),
             depositAddress
         );
         assertEq(
             accountHandler.addressRecord(
-                keccak256(
-                    abi.encodePacked(
-                        DEFAULT_ACCOUNT,
-                        IAccountHandler.AddressCategory.BTC,
-                        uint32(0)
-                    )
-                )
+                keccak256(abi.encodePacked(DEFAULT_ACCOUNT, AddressCategory.BTC, uint32(0)))
             ),
             depositAddress
         );
-        assertEq(
-            accountHandler.userMapping(depositAddress, IAccountHandler.AddressCategory.BTC),
-            msgSender
-        );
+        assertEq(accountHandler.userMapping(depositAddress, AddressCategory.BTC), msgSender);
         assertEq(uint8(taskManager.getTaskState(taskOpts[0].taskId)), uint8(State.Completed));
 
         // fail: already registered
@@ -79,49 +68,53 @@ contract AccountCreationTest is BaseTest {
                 depositAddress
             )
         );
-        taskOpts[0].taskId = accountHandler.submitRegisterTask(
+        accountHandler.submitRegisterTask(taskParams);
+
+        // fail: mismatch account
+        taskParams[0] = AccountRegistrationTaskParam(
             msgSender,
-            DEFAULT_ACCOUNT,
-            IAccountHandler.AddressCategory.BTC,
+            DEFAULT_ACCOUNT + 1,
+            AddressCategory.BTC,
             0
         );
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccountHandler.MismatchedAccount.selector, DEFAULT_ACCOUNT)
+        );
+        accountHandler.submitRegisterTask(taskParams);
         vm.stopPrank();
     }
 
     function test_TaskRevert() public {
         vm.startPrank(msgSender);
-        // fail case: user address as address zero
-        vm.expectRevert(IAccountHandler.InvalidUserAddress.selector);
-        accountHandler.submitRegisterTask(
+        AccountRegistrationTaskParam[] memory taskParams = new AccountRegistrationTaskParam[](1);
+        taskParams[0] = AccountRegistrationTaskParam(
             address(0),
             DEFAULT_ACCOUNT,
-            IAccountHandler.AddressCategory.BTC,
+            AddressCategory.BTC,
             0
         );
+        // fail case: user address as address zero
+        vm.expectRevert(IAccountHandler.InvalidUserAddress.selector);
+        accountHandler.submitRegisterTask(taskParams);
 
         // fail case: account number less than 10000
         uint32 invalidAccountNum = uint32(9999);
+        taskParams[0] = AccountRegistrationTaskParam(
+            msgSender,
+            invalidAccountNum,
+            AddressCategory.BTC,
+            0
+        );
         vm.expectRevert(
             abi.encodeWithSelector(IAccountHandler.InvalidAccountNumber.selector, invalidAccountNum)
         );
-        accountHandler.submitRegisterTask(
-            msgSender,
-            invalidAccountNum,
-            IAccountHandler.AddressCategory.BTC,
-            0
-        );
+        accountHandler.submitRegisterTask(taskParams);
         vm.stopPrank();
 
         // fail case: deposit address as address zero
         vm.prank(entryPointProxy);
         vm.expectRevert(IAccountHandler.InvalidAddress.selector);
-        accountHandler.registerNewAddress(
-            msgSender,
-            DEFAULT_ACCOUNT,
-            IAccountHandler.AddressCategory.BTC,
-            0,
-            ""
-        );
+        accountHandler.registerNewAddress(msgSender, DEFAULT_ACCOUNT, AddressCategory.BTC, 0, "");
     }
 
     function testFuzz_SubmitTaskFuzz(
@@ -133,15 +126,17 @@ contract AccountCreationTest is BaseTest {
         vm.assume(_account < 10000000);
         vm.assume(_chain < 3);
         vm.assume(bytes(_address).length > 0);
-        IAccountHandler.AddressCategory chain = IAccountHandler.AddressCategory(_chain);
+        AddressCategory chain = AddressCategory(_chain);
         vm.startPrank(msgSender);
+        AccountRegistrationTaskParam[] memory taskParams = new AccountRegistrationTaskParam[](1);
+        taskParams[0] = AccountRegistrationTaskParam(msgSender, _account, chain, _index);
         if (_account > 10000) {
-            accountHandler.submitRegisterTask(msgSender, _account, chain, _index);
+            accountHandler.submitRegisterTask(taskParams);
         } else {
             vm.expectRevert(
                 abi.encodeWithSelector(IAccountHandler.InvalidAccountNumber.selector, _account)
             );
-            accountHandler.submitRegisterTask(msgSender, _account, chain, _index);
+            accountHandler.submitRegisterTask(taskParams);
         }
         vm.stopPrank();
     }

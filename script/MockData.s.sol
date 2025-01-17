@@ -9,7 +9,7 @@ import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeab
 import {AssetHandlerUpgradeable, AssetParam, TokenInfo, ConsolidateTaskParam} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {FundsHandlerUpgradeable, DepositInfo, WithdrawalInfo} from "../src/handlers/FundsHandlerUpgradeable.sol";
 import {TaskManagerUpgradeable, State} from "../src/TaskManagerUpgradeable.sol";
-import {IAccountHandler} from "../src/interfaces/IAccountHandler.sol";
+import {IAccountHandler, AddressCategory} from "../src/interfaces/IAccountHandler.sol";
 
 // this contract is only used for contract testing
 contract MockData is Script {
@@ -147,7 +147,7 @@ contract MockData is Script {
             accountHandler.registerNewAddress(
                 deployer,
                 10001 + i,
-                IAccountHandler.AddressCategory.EVM,
+                AddressCategory.EVM,
                 i,
                 Strings.toHexString(makeAddr(Strings.toString(i)))
             );
@@ -156,21 +156,21 @@ contract MockData is Script {
         accountHandler.registerNewAddress(
             deployer,
             10001,
-            IAccountHandler.AddressCategory.BTC,
+            AddressCategory.BTC,
             0,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR"
         );
         accountHandler.registerNewAddress(
             deployer,
             10002,
-            IAccountHandler.AddressCategory.BTC,
+            AddressCategory.BTC,
             1,
             "1HkJEUpgptueutWRFB1bjHGKA5wtKBoToW"
         );
         accountHandler.registerNewAddress(
             deployer,
             10003,
-            IAccountHandler.AddressCategory.BTC,
+            AddressCategory.BTC,
             2,
             "1PS21zbYxJZUzsHg91MfxUDbqkn7BEw2C5"
         );
@@ -178,21 +178,21 @@ contract MockData is Script {
         accountHandler.registerNewAddress(
             deployer,
             10001,
-            IAccountHandler.AddressCategory.SOL,
+            AddressCategory.SOL,
             0,
             "w9A6215VdjCgX9BVwK1ZXE7sKBuNGh7bdmeGBEs7625"
         );
         accountHandler.registerNewAddress(
             deployer,
             10002,
-            IAccountHandler.AddressCategory.SOL,
+            AddressCategory.SOL,
             1,
             "4WMARsRWo8x7oJRwTQ9LhbDuiAnzz5TF3WzpTCgACrfe"
         );
         accountHandler.registerNewAddress(
             deployer,
             10003,
-            IAccountHandler.AddressCategory.SOL,
+            AddressCategory.SOL,
             2,
             "8ymc6niJiF4imco29UU3z7mK11sCt9NdL3LjG3VkEYAC"
         );
