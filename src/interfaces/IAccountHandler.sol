@@ -1,15 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface IAccountHandler {
-    enum AddressCategory {
-        BTC,
-        EVM,
-        SOL,
-        SUI,
-        EVM_TSS
-    }
+enum AddressCategory {
+    BTC,
+    EVM,
+    SOL,
+    SUI,
+    EVM_TSS
+}
 
+struct AccountRegistrationTaskParam {
+    address userAddr;
+    uint32 account;
+    AddressCategory chain;
+    uint32 index;
+}
+
+interface IAccountHandler {
     // events
     event RequestRegisterAddress(
         address indexed userAddr,
