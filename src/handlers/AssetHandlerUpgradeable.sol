@@ -189,11 +189,10 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
-            require(
-                bytes(_params[i].fromAddress).length > 0 && bytes(_params[i].toAddress).length > 0,
-                InvalidAddress()
-            );
             require(_params[i].amount > 0, InvalidAmount());
+            uint256 fromAddrLength = bytes(_params[i].fromAddress).length;
+            uint256 toAddrLength = bytes(_params[i].toAddress).length;
+            require(fromAddrLength > 0 && toAddrLength > 0, InvalidAddress());
 
             emit RequestTransfer(_params[i]);
             taskIds[i] = taskManager.submitTask(
@@ -205,7 +204,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    uint256(320) // offset for txHash
+                    uint256(320) + (32 * (fromAddrLength / 32)) + (32 * (toAddrLength / 32)) // offset for txHash
                 )
             );
         }
@@ -238,11 +237,12 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
-            require(bytes(_params[i].fromAddress).length > 0, InvalidAddress());
             require(
                 _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
                 InvalidAmount()
             );
+            uint256 addrLength = bytes(_params[i].fromAddress).length;
+            require(addrLength > 0, InvalidAddress());
             emit RequestConsolidate(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
@@ -252,7 +252,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    uint256(224) // offset for txHash
+                    uint256(224) + (32 * (addrLength / 32)) // offset for txHash
                 )
             );
         }

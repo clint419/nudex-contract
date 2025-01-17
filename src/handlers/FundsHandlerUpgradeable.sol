@@ -79,6 +79,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     function submitDepositTask(
         DepositInfo[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
@@ -132,6 +133,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     function submitWithdrawTask(
         WithdrawalInfo[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
@@ -143,7 +145,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     assetHandler.getAssetDetails(_params[i].ticker).minWithdrawAmount,
                 InvalidAmount()
             );
-            require(bytes(_params[i].toAddress).length > 0, InvalidAddress());
+            uint256 addrLength = bytes(_params[i].toAddress).length;
+            require(addrLength > 0, InvalidAddress());
             emit INIP20.NIP20TokenEvent_burnb(
                 _params[i].userAddress,
                 _params[i].ticker,
@@ -159,7 +162,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].toAddress,
                     _params[i].amount,
-                    uint256(256)
+                    256 + (32 * (addrLength / 32)) // offset for txHash
                 )
             );
         }
