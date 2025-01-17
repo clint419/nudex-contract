@@ -64,6 +64,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
         require(!isParticipant[_newParticipant], AlreadyParticipant(_newParticipant));
         require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
+        emit RequestAddParticipant(_newParticipant);
         return
             taskManager.submitTask(
                 msg.sender,
@@ -94,6 +95,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
         require(participants.length > 3, NotEnoughParticipant());
         require(isParticipant[_participant], NotParticipant(_participant));
+        emit RequestRemoveParticipant(_participant);
         return
             taskManager.submitTask(
                 msg.sender,
@@ -129,6 +131,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         address[] calldata _newParticipants
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
         require(_newParticipants.length > 2, NotEnoughParticipant());
+        emit RequestResetParticipants(_newParticipants);
         return
             taskManager.submitTask(
                 msg.sender,

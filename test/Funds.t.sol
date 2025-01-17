@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseTest.sol";
+import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {FundsHandlerUpgradeable} from "../src/handlers/FundsHandlerUpgradeable.sol";
@@ -264,12 +265,14 @@ contract FundsTest is BaseTest {
         vm.startPrank(msgSender);
         // setup withdrawal info
         uint256 withdrawIndex = fundsHandler.getWithdrawals(msgSender).length;
+        string
+            memory withdrawTxHash = "--------------------------------txHash--------------------------------";
         assertEq(withdrawIndex, 0);
         fundsHandler.submitWithdrawTask(withdrawTaskParams);
 
         // pending task
         taskOpts[0].state = State.Pending;
-        taskOpts[0].extraData = abi.encode(uint256(6), bytes32("txHash"));
+        taskOpts[0].extraData = TestHelper.getPaddedString(withdrawTxHash);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -285,7 +288,7 @@ contract FundsTest is BaseTest {
             CHAIN_ID,
             DEPOSIT_ADDRESS,
             DEFAULT_AMOUNT,
-            "txHash"
+            withdrawTxHash
         );
         entryPoint.verifyAndCall(taskOpts, signature);
         WithdrawalInfo memory withdrawInfo = fundsHandler.getWithdrawal(msgSender, withdrawIndex);
@@ -339,7 +342,7 @@ contract FundsTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 i,
                 State.Pending,
-                abi.encode(uint256(6), bytes32("txHash"))
+                TestHelper.getPaddedString("txHash")
             );
         }
         fundsHandler.submitWithdrawTask(batchWithdrawTaskParams);
@@ -370,6 +373,50 @@ contract FundsTest is BaseTest {
             withdrawalInfo = fundsHandler.getWithdrawal(msgSender, i);
             assertEq(amounts[i], withdrawalInfo.amount);
         }
+        vm.stopPrank();
+    }
+
+    function testFuzz_WithdrawFuzz(
+        string calldata _toAddress,
+        uint256 _amount,
+        string calldata _txHash
+    ) public {
+        vm.startPrank(msgSender);
+        vm.assume(bytes(_toAddress).length > 0);
+        vm.assume(_amount > MIN_DEFAULT_AMOUNT);
+        vm.assume(bytes(_txHash).length > 0);
+        // setup withdrawal info
+        WithdrawalInfo[] memory tempWithdrawTaskParams = new WithdrawalInfo[](1);
+        tempWithdrawTaskParams[0] = WithdrawalInfo(
+            msgSender,
+            CHAIN_ID,
+            TICKER,
+            _toAddress,
+            _amount
+        );
+        fundsHandler.submitWithdrawTask(tempWithdrawTaskParams);
+
+        // pending task
+        taskOpts[0].state = State.Pending;
+        taskOpts[0].extraData = TestHelper.getPaddedString(_txHash);
+        signature = _generateOptSignature(taskOpts, tssKey);
+        entryPoint.verifyAndCall(taskOpts, signature);
+
+        // completed task
+        taskOpts[0].state = State.Completed;
+        taskOpts[0].extraData = "";
+        signature = _generateOptSignature(taskOpts, tssKey);
+        // check event and result
+        vm.expectEmit(true, true, true, true);
+        emit IFundsHandler.WithdrawalRecorded(
+            msgSender,
+            TICKER,
+            CHAIN_ID,
+            _toAddress,
+            _amount,
+            _txHash
+        );
+        entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();
     }
 }

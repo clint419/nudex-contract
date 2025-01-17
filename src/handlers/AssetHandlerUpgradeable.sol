@@ -204,7 +204,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    uint256(320) + (32 * (fromAddrLength / 32)) + (32 * (toAddrLength / 32)) // offset for txHash
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    uint256(320) +
+                        (32 * ((fromAddrLength - 1) / 32)) +
+                        (32 * ((toAddrLength - 1) / 32))
                 )
             );
         }
@@ -252,7 +256,9 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    uint256(224) + (32 * (addrLength / 32)) // offset for txHash
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    uint256(224) + (32 * ((addrLength - 1) / 32))
                 )
             );
         }

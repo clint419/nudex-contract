@@ -5,6 +5,9 @@ interface IParticipantHandler {
     event ParticipantAdded(address indexed participant);
     event ParticipantRemoved(address indexed participant);
     event ParticipantsReset(address[] indexed participants);
+    event RequestAddParticipant(address indexed participants);
+    event RequestRemoveParticipant(address indexed participants);
+    event RequestResetParticipants(address[] indexed participants);
 
     error AlreadyParticipant(address);
     error NotEligible(address);

@@ -162,7 +162,9 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].toAddress,
                     _params[i].amount,
-                    256 + (32 * (addrLength / 32)) // offset for txHash
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    256 + (32 * ((addrLength - 1) / 32))
                 )
             );
         }
