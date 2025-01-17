@@ -38,21 +38,17 @@ contract DeployTest is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         setupParticipant(true);
-        deploy(
-            address(0xD7Bf3503C856c18eCb07eAf72E45E37f9Ab68A5B),
-            address(0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df),
-            address(0xc8006AAD20e8D15C7B3F8b45f309864034b9156B)
-        );
+        deploy(address(0), address(0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df), address(0));
 
         vm.stopBroadcast();
     }
 
     function setupParticipant(bool _fromEnv) public {
         if (_fromEnv) {
-            submitter = vm.envAddress("PARTICIPANT_1");
-            initialParticipants.push(submitter);
-            initialParticipants.push(submitter);
-            initialParticipants.push(submitter);
+            submitter = vm.envAddress("SUBMITTER_ADDR");
+            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_2"));
+            initialParticipants.push(vm.envAddress("PARTICIPANT_3"));
             console.log("\nSubmitter: ", submitter);
         } else {
             (address participant1, uint256 key1) = makeAddrAndKey("participant1");
