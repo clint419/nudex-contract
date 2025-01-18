@@ -77,7 +77,8 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                     param.userAddr,
                     param.account,
                     param.chain,
-                    param.index
+                    param.index,
+                    uint256(160)
                 )
             );
             emit RequestRegisterAddress(taskIds[i], param);

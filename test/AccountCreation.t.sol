@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseTest.sol";
+import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
 import {IAccountHandler, AddressCategory, AccountRegistrationTaskParam} from "../src/interfaces/IAccountHandler.sol";
@@ -42,7 +43,7 @@ contract AccountCreationTest is BaseTest {
             0
         );
         accountHandler.submitRegisterTask(taskParams);
-        taskOpts[0].extraData = offsetString(depositAddress);
+        taskOpts[0].extraData = TestHelper.getPaddedString(depositAddress);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -139,11 +140,5 @@ contract AccountCreationTest is BaseTest {
             accountHandler.submitRegisterTask(taskParams);
         }
         vm.stopPrank();
-    }
-
-    function offsetString(string memory _address) internal pure returns (bytes memory) {
-        bytes memory depositAddrData = abi.encode(_address);
-        depositAddrData[31] = bytes1(uint8(160));
-        return depositAddrData;
     }
 }

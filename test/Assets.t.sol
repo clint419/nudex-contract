@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "./BaseTest.sol";
+import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {IAssetHandler, AssetParam, ConsolidateTaskParam, TransferParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
@@ -153,7 +154,7 @@ contract AssetsTest is BaseTest {
         // correct amount
         consolidateParams[0] = ConsolidateTaskParam(fromAddr, TICKER, CHAIN_ID, amount);
         assetHandler.submitConsolidateTask(consolidateParams);
-        taskOpts[0].extraData = abi.encode(bytes(txHash).length, bytes32(bytes(txHash)));
+        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
         signature = _generateOptSignature(taskOpts, tssKey);
 
         vm.expectEmit(true, true, true, true);
@@ -198,7 +199,7 @@ contract AssetsTest is BaseTest {
         // correct amount
         transferParams[0] = TransferParam(fromAddr, toAddr, TICKER, CHAIN_ID, amount);
         assetHandler.submitTransferTask(transferParams);
-        taskOpts[0].extraData = abi.encode(bytes(txHash).length, bytes32(bytes(txHash)));
+        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
         signature = _generateOptSignature(taskOpts, tssKey);
 
         vm.expectEmit(true, true, true, true);
