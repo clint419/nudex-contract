@@ -15,6 +15,10 @@ import {EntryPointUpgradeable} from "../src/EntryPointUpgradeable.sol";
 
 // this contract is only used for contract testing
 contract DeployTest is Script {
+    EntryPointUpgradeable entryPoint;
+    MockNuvoToken nuvoToken;
+    NuvoLockUpgradeable nuvoLock;
+
     address daoContract;
     address tssSigner;
     address deployer;
@@ -36,67 +40,58 @@ contract DeployTest is Script {
         console.log("Deployer address: ", deployer);
 
         vm.startBroadcast(deployerPrivateKey);
+        deployTopLevel(false);
+        vm.stopBroadcast();
 
         setupParticipant(true);
-        deploy(address(0), address(0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df), address(0));
 
+        vm.startBroadcast(deployerPrivateKey);
+        deployHandlers(true);
         vm.stopBroadcast();
+
+        console.log("\n   submitter: ", submitter);
+        for (uint8 i; i < initialParticipants.length; ++i) {
+            console.log("participant", i, " address: ", initialParticipants[i]);
+        }
     }
 
-    function setupParticipant(bool _fromEnv) public {
+    function deployTopLevel(bool _fromEnv) public {
         if (_fromEnv) {
-            submitter = vm.envAddress("SUBMITTER_ADDR");
-            initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_2"));
-            initialParticipants.push(vm.envAddress("PARTICIPANT_3"));
-            console.log("\nSubmitter: ", submitter);
+            entryPoint = EntryPointUpgradeable(vm.envAddress("ENTRY_POINT"));
+            nuvoToken = MockNuvoToken(vm.envAddress("NUVO_TOKEN_ADDR"));
+            nuvoLock = NuvoLockUpgradeable(vm.envAddress("NUVO_LOCK_ADDR"));
         } else {
-            (address participant1, uint256 key1) = makeAddrAndKey("participant1");
-            initialParticipants.push(participant1);
-            initialParticipants.push(participant1);
-            initialParticipants.push(participant1);
-            console.log("\nSubmitter: ", participant1);
-            console.logBytes32(bytes32(key1));
-            submitter = participant1;
+            // deploy entryPoint
+            entryPoint = new EntryPointUpgradeable();
+
+            // deploy nuvoToken
+            nuvoToken = new MockNuvoToken();
+
+            // deploy nuvoLock
+            nuvoLock = new NuvoLockUpgradeable(address(nuvoToken));
+            nuvoLock.initialize(deployer, daoContract, address(entryPoint), 300, 10);
         }
+        console.log("\n  |EntryPoint| ", address(entryPoint));
+        console.log("|NuvoToken|", address(nuvoToken));
+        console.log("|NuvoLock|", address(nuvoLock));
     }
 
-    function deploy(address _entryPoint, address _nuvoToken, address _nuvoLock) public {
-        address entryPointAddr;
-        if (_entryPoint == address(0)) {
-            // deploy entryPoint proxy
-            EntryPointUpgradeable entryPoint = new EntryPointUpgradeable();
-            entryPointAddr = address(entryPoint);
-            console.log("\n  |EntryPoint| ", entryPointAddr);
-        } else {
-            entryPointAddr = _entryPoint;
-        }
-
-        // deploy nuvoToken
-        if (_nuvoToken == address(0)) {
-            MockNuvoToken nuvoToken = new MockNuvoToken();
-            console.log("|NuvoToken|", address(nuvoToken));
-            _nuvoToken = address(nuvoToken);
-        }
-
-        // deploy nuvoLock
-        if (_nuvoLock == address(0)) {
-            NuvoLockUpgradeable nuvoLock = new NuvoLockUpgradeable(_nuvoToken);
-            nuvoLock.initialize(deployer, daoContract, entryPointAddr, 300, 10);
-            console.log("|NuvoLock|", address(nuvoLock));
-            _nuvoLock = address(nuvoLock);
-        }
-
+    function deployHandlers(bool _entryPointInit) public {
         // deploy taskManager
         TaskManagerUpgradeable taskManager = new TaskManagerUpgradeable();
         console.log("|TaskManager|", address(taskManager));
 
         // deploy participantHandler
         ParticipantHandlerUpgradeable participantHandler = new ParticipantHandlerUpgradeable(
-            _nuvoLock,
+            address(nuvoLock),
             address(taskManager)
         );
-        participantHandler.initialize(daoContract, entryPointAddr, submitter, initialParticipants);
+        participantHandler.initialize(
+            daoContract,
+            address(entryPoint),
+            submitter,
+            initialParticipants
+        );
         handlers.push(address(participantHandler));
         console.log("|ParticipantHandler|", address(participantHandler));
 
@@ -104,13 +99,13 @@ contract DeployTest is Script {
         AccountHandlerUpgradeable accountHandler = new AccountHandlerUpgradeable(
             address(taskManager)
         );
-        accountHandler.initialize(daoContract, entryPointAddr, submitter);
+        accountHandler.initialize(daoContract, address(entryPoint), submitter);
         handlers.push(address(accountHandler));
         console.log("|AccountHandler|", address(accountHandler));
 
         // deploy accountHandler
         AssetHandlerUpgradeable assetHandler = new AssetHandlerUpgradeable(address(taskManager));
-        assetHandler.initialize(daoContract, entryPointAddr, submitter);
+        assetHandler.initialize(daoContract, address(entryPoint), submitter);
         handlers.push(address(assetHandler));
         console.log("|AssetHandler|", address(assetHandler));
 
@@ -119,20 +114,60 @@ contract DeployTest is Script {
             address(assetHandler),
             address(taskManager)
         );
-        fundsHandler.initialize(daoContract, entryPointAddr, submitter);
+        fundsHandler.initialize(daoContract, address(entryPoint), submitter);
         handlers.push(address(fundsHandler));
         console.log("|FundsHandler|", address(fundsHandler));
 
         // initialize entryPoint link to all contracts
-        taskManager.initialize(daoContract, entryPointAddr, handlers);
-        if (_entryPoint == address(0)) {
-            EntryPointUpgradeable entryPoint = EntryPointUpgradeable(entryPointAddr);
+        taskManager.initialize(daoContract, address(entryPoint), handlers);
+        if (_entryPointInit) {
             entryPoint.initialize(
                 tssSigner, // tssSigner
                 address(participantHandler), // participantHandler
                 address(taskManager), // taskManager
-                _nuvoLock // nuvoLock
+                address(nuvoLock) // nuvoLock
             );
+        }
+    }
+
+    function setupParticipant(bool _fromEnv) public {
+        if (_fromEnv) {
+            uint256 privKey1 = vm.envUint("PARTICIPANT_KEY_1");
+            address participant1 = vm.createWallet(privKey1).addr;
+            vm.startBroadcast(privKey1);
+            nuvoToken.mint(participant1, 10 ether);
+            nuvoToken.approve(address(nuvoLock), 1 ether);
+            nuvoLock.lock(1 ether, 300);
+            vm.stopBroadcast();
+
+            uint256 privKey2 = vm.envUint("PARTICIPANT_KEY_2");
+            address participant2 = vm.createWallet(privKey2).addr;
+            vm.startBroadcast(privKey2);
+            nuvoToken.mint(participant2, 10 ether);
+            nuvoToken.approve(address(nuvoLock), 1 ether);
+            nuvoLock.lock(1 ether, 300);
+            vm.stopBroadcast();
+
+            uint256 privKey3 = vm.envUint("PARTICIPANT_KEY_3");
+            address participant3 = vm.createWallet(privKey3).addr;
+            vm.startBroadcast(privKey3);
+            nuvoToken.mint(participant3, 10 ether);
+            nuvoToken.approve(address(nuvoLock), 1 ether);
+            nuvoLock.lock(1 ether, 300);
+            vm.stopBroadcast();
+
+            submitter = vm.envAddress("SUBMITTER_ADDR");
+            initialParticipants.push(participant1);
+            initialParticipants.push(participant2);
+            initialParticipants.push(participant3);
+        } else {
+            (address participant1, uint256 key1) = makeAddrAndKey("participant1");
+            initialParticipants.push(participant1);
+            initialParticipants.push(participant1);
+            initialParticipants.push(participant1);
+            console.log("\nSubmitter: ", participant1);
+            console.logBytes32(bytes32(key1));
+            submitter = participant1;
         }
     }
 }

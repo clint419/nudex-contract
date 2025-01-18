@@ -10,7 +10,6 @@ import {NuvoLockUpgradeable} from "../src/NuvoLockUpgradeable.sol";
 // this contract is only used for contract testing
 contract ParticipantSetup is Script {
     MockNuvoToken nuvoToken;
-
     NuvoLockUpgradeable nuvoLock;
 
     function setUp() public {
