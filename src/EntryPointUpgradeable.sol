@@ -92,7 +92,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
     function setSignerAddress(
         address _newSigner,
         bytes calldata _signature
-    ) external onlyCurrentSubmitter nonReentrant {
+    ) external onlyCurrentSubmitter {
         require(_newSigner != address(0), InvalidAddress());
         require(
             _verifySignature(
@@ -103,6 +103,44 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
         );
 
         tssSigner = _newSigner;
+    }
+
+    /**
+     * @dev Set dependency addresses.
+     * @param _participantHandler The new participantHandler address.
+     * @param _taskManager The new taskManager address.
+     * @param _nuvoLock The new nuvoLock address.
+     */
+    function setDependency(
+        address _participantHandler,
+        address _taskManager,
+        address _nuvoLock,
+        bytes calldata _signature
+    ) external onlyCurrentSubmitter {
+        require(
+            _verifySignature(
+                keccak256(
+                    abi.encodePacked(
+                        _participantHandler,
+                        _taskManager,
+                        _nuvoLock,
+                        tssNonce++,
+                        block.chainid
+                    )
+                ),
+                _signature
+            ),
+            InvalidSigner(msg.sender)
+        );
+        if (_participantHandler != address(0)) {
+            participantHandler = IParticipantHandler(_participantHandler);
+        }
+        if (_taskManager != address(0)) {
+            taskManager = ITaskManager(_taskManager);
+        }
+        if (_nuvoLock != address(0)) {
+            nuvoLock = INuvoLock(_nuvoLock);
+        }
     }
 
     /**
