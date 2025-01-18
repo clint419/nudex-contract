@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {INuvoLock} from "./interfaces/INuvoLock.sol";
 
 contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
@@ -95,19 +96,52 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
         emit RewardPerPeriodUpdated(_newRewardPerPeriod, lastPeriodNumber);
     }
 
-    // TODO: lock with permet
     /**
-     * @dev Lock NuvoToken.
+     * @dev Lock NuvoToken for msg.sender.
      * @param _amount The lock token amount.
      * @param _period The lock period.
      */
     function lock(uint256 _amount, uint32 _period) external {
+        _lock(msg.sender, _amount, _period);
+    }
+
+    /**
+     * @dev Lock NuvoToken using ERC20Permit for approval.
+     * @param _owner The address to lock for.
+     * @param _amount The amount of tokens to lock.
+     * @param _period The lock period.
+     * @param _v The recovery byte of the signature.
+     * @param _r Half of the ECDSA signature pair.
+     * @param _s Half of the ECDSA signature pair.
+     */
+    function lockWithpermit(
+        address _owner,
+        uint256 _amount,
+        uint32 _period,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) external {
+        IERC20Permit(address(nuvoToken)).permit(
+            _owner,
+            address(this),
+            _amount,
+            type(uint256).max,
+            _v,
+            _r,
+            _s
+        );
+        _lock(_owner, _amount, _period);
+    }
+
+    function _lock(address _owner, uint256 _amount, uint32 _period) internal {
         require(_amount >= minLockAmount, AmountBelowMin(_amount));
         require(_period >= minLockPeriod, TimePeriodBelowMin(_period));
-        require(locks[msg.sender].amount == 0, AlreadyLocked(msg.sender));
+        // TODO: can only lock once?
+        require(locks[_owner].amount == 0, AlreadyLocked(_owner));
 
         uint32 unlockTime = uint32(block.timestamp + _period);
-        locks[msg.sender] = LockInfo({
+        locks[_owner] = LockInfo({
             amount: _amount,
             unlockTime: unlockTime,
             originalLockTime: _period,
@@ -119,13 +153,13 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
         });
 
         // Transfer NUVO tokens from the user to the contract
-        nuvoToken.safeTransferFrom(msg.sender, address(this), _amount);
+        nuvoToken.safeTransferFrom(_owner, address(this), _amount);
         totalLocked += _amount;
         // record userAddr
-        userIndex[msg.sender] = users.length;
-        users.push(msg.sender);
+        userIndex[_owner] = users.length;
+        users.push(_owner);
 
-        emit Locked(msg.sender, _amount, unlockTime);
+        emit Locked(_owner, _amount, unlockTime);
     }
 
     /**
