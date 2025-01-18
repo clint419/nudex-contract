@@ -69,10 +69,12 @@ contract MockData is Script {
 
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
+
         assetData();
         accountData();
         fundsData();
         updateTask();
+
         vm.stopBroadcast();
     }
 

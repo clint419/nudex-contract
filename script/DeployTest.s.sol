@@ -55,7 +55,7 @@ contract DeployTest is Script {
 
         vm.stopBroadcast();
 
-        console.log("\n   submitter: ", submitter);
+        console.log("\n  submitter: ", submitter);
         for (uint8 i; i < initialParticipants.length; ++i) {
             console.log("participant", i, " address: ", initialParticipants[i]);
         }
@@ -140,17 +140,17 @@ contract DeployTest is Script {
         if (_fromEnv) {
             uint256 privKey1 = vm.envUint("PARTICIPANT_KEY_1");
             address participant1 = vm.createWallet(privKey1).addr;
-            nuvoToken.mint(participant1, 10 ether);
+            nuvoToken.mint(participant1, 1 ether);
             _lockWithPermit(privKey1, participant1, 1 ether, 300);
 
             uint256 privKey2 = vm.envUint("PARTICIPANT_KEY_2");
             address participant2 = vm.createWallet(privKey2).addr;
-            nuvoToken.mint(participant2, 10 ether);
+            nuvoToken.mint(participant2, 1 ether);
             _lockWithPermit(privKey2, participant2, 1 ether, 300);
 
             uint256 privKey3 = vm.envUint("PARTICIPANT_KEY_3");
             address participant3 = vm.createWallet(privKey3).addr;
-            nuvoToken.mint(participant3, 10 ether);
+            nuvoToken.mint(participant3, 1 ether);
             _lockWithPermit(privKey3, participant3, 1 ether, 300);
 
             submitter = vm.envAddress("SUBMITTER_ADDR");
