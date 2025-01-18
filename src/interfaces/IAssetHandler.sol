@@ -49,7 +49,7 @@ struct TokenInfo {
 
 interface IAssetHandler {
     // events
-    event RequestUpdateAsset(bytes32 indexed ticker, bytes callData);
+    event RequestUpdateAsset(uint64 taskId, bytes32 indexed ticker, bytes callData);
     event AssetListed(bytes32 indexed ticker, AssetParam assetParam);
     event AssetUpdated(bytes32 indexed ticker, AssetParam assetParam);
     event AssetDelisted(bytes32 indexed ticker);
@@ -57,7 +57,7 @@ interface IAssetHandler {
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
 
-    event RequestTransfer(TransferParam param);
+    event RequestTransfer(uint64 taskId, TransferParam param);
     event Transfer(
         bytes32 indexed ticker,
         uint64 indexed chainId,
@@ -66,7 +66,7 @@ interface IAssetHandler {
         uint256 amount,
         string txHash
     );
-    event RequestConsolidate(ConsolidateTaskParam param);
+    event RequestConsolidate(uint64 taskId, ConsolidateTaskParam param);
     event Consolidate(
         bytes32 indexed ticker,
         uint64 indexed chainId,

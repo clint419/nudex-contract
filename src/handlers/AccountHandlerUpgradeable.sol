@@ -69,7 +69,6 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                     ]
                 )
             );
-            emit RequestRegisterAddress(param.userAddr, param.account, param.chain, param.index);
 
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
@@ -81,6 +80,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                     param.index
                 )
             );
+            emit RequestRegisterAddress(taskIds[i], param);
         }
     }
 

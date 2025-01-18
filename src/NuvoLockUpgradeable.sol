@@ -95,6 +95,7 @@ contract NuvoLockUpgradeable is INuvoLock, AccessControlUpgradeable {
         emit RewardPerPeriodUpdated(_newRewardPerPeriod, lastPeriodNumber);
     }
 
+    // TODO: lock with permet
     /**
      * @dev Lock NuvoToken.
      * @param _amount The lock token amount.

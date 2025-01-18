@@ -102,9 +102,9 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function submitAssetTask(
         bytes32 _ticker,
         bytes calldata _callData
-    ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64) {
-        emit RequestUpdateAsset(_ticker, _callData);
-        return taskManager.submitTask(msg.sender, _callData);
+    ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64 taskId) {
+        taskId = taskManager.submitTask(msg.sender, _callData);
+        emit RequestUpdateAsset(taskId, _ticker, _callData);
     }
 
     // Update listed asset
@@ -194,7 +194,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             uint256 toAddrLength = bytes(_params[i].toAddress).length;
             require(fromAddrLength > 0 && toAddrLength > 0, InvalidAddress());
 
-            emit RequestTransfer(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(
@@ -211,6 +210,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                         (32 * ((toAddrLength - 1) / 32))
                 )
             );
+            emit RequestTransfer(taskIds[i], _params[i]);
         }
     }
 
@@ -247,7 +247,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             );
             uint256 addrLength = bytes(_params[i].fromAddress).length;
             require(addrLength > 0, InvalidAddress());
-            emit RequestConsolidate(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(
@@ -261,6 +260,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     uint256(224) + (32 * ((addrLength - 1) / 32))
                 )
             );
+            emit RequestConsolidate(taskIds[i], _params[i]);
         }
     }
 

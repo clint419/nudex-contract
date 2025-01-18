@@ -92,11 +92,11 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 InvalidAmount()
             );
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
-            emit DepositRequested(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
+            emit RequestDeposit(taskIds[i], _params[i]);
         }
     }
 
@@ -152,7 +152,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
-            emit WithdrawalRequested(_params[i]);
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(
@@ -167,6 +166,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     256 + (32 * ((addrLength - 1) / 32))
                 )
             );
+            emit RequestWithdrawal(taskIds[i], _params[i]);
         }
     }
 

@@ -18,12 +18,7 @@ struct AccountRegistrationTaskParam {
 
 interface IAccountHandler {
     // events
-    event RequestRegisterAddress(
-        address indexed userAddr,
-        uint32 indexed account,
-        AddressCategory indexed chain,
-        uint32 index
-    );
+    event RequestRegisterAddress(uint64 taskId, AccountRegistrationTaskParam taskParam);
     event AddressRegistered(
         address userAddr,
         uint256 indexed account,
