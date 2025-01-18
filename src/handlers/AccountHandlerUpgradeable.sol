@@ -101,11 +101,24 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         string calldata _address
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(bytes(_address).length > 0, InvalidAddress());
+        bytes32 hash = keccak256(abi.encodePacked(_account, _chain, _index));
+        require(
+            bytes(addressRecord[hash]).length == 0,
+            RegisteredAccount(_account, addressRecord[hash])
+        );
+
+        // check user address => account binding
         if (userAccounts[_userAddr] == 0) {
             userAccounts[_userAddr] = _account;
+        } else {
+            require(
+                userAccounts[_userAddr] == _account,
+                MismatchedAccount(userAccounts[_userAddr])
+            );
         }
+
+        addressRecord[hash] = _address;
         userMapping[_address][_chain] = _userAddr;
-        addressRecord[keccak256(abi.encodePacked(_account, _chain, _index))] = _address;
         emit AddressRegistered(_userAddr, _account, _chain, _index, _address);
         return abi.encodePacked(uint8(1), _account, _chain, _index, _address);
     }

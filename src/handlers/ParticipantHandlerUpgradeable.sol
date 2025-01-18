@@ -78,6 +78,8 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     function addParticipant(
         address _newParticipant
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        require(!isParticipant[_newParticipant], AlreadyParticipant(_newParticipant));
+        require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
         isParticipant[_newParticipant] = true;
         participants.push(_newParticipant);
 
@@ -108,6 +110,8 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     function removeParticipant(
         address _participant
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        require(participants.length > 3, NotEnoughParticipant());
+        require(isParticipant[_participant], NotParticipant(_participant));
         isParticipant[_participant] = false;
         for (uint8 i; i < participants.length; i++) {
             if (participants[i] == _participant) {

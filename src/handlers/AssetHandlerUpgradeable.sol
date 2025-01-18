@@ -79,6 +79,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         AssetParam calldata _assetParam
     ) external onlyRole(ENTRYPOINT_ROLE) {
+        require(!nudexAssets[_ticker].isListed, "Asset already listed");
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         // update listed assets
         tempNudexAsset.listIndex = uint32(assetTickerList.length);

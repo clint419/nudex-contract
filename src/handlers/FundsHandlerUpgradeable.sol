@@ -106,6 +106,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     function recordDeposit(
         DepositInfo calldata _param
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        require(
+            !pauseState[_param.ticker] && !pauseState[bytes32(uint256(_param.chainId))],
+            Paused()
+        );
         deposits[_param.userAddress].push(_param);
         emit INIP20.NIP20TokenEvent_mintb(_param.userAddress, _param.ticker, _param.amount);
         emit DepositRecorded(
@@ -181,6 +185,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         uint256 _amount,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+        require(!pauseState[_ticker] && !pauseState[bytes32(uint256(_chainId))], Paused());
         withdrawals[_userAddress].push(
             WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount)
         );
