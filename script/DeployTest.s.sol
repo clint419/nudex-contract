@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {MockNuvoToken} from "../src/mocks/MockNuvoToken.sol";
 
@@ -15,6 +16,13 @@ import {EntryPointUpgradeable} from "../src/EntryPointUpgradeable.sol";
 
 // this contract is only used for contract testing
 contract DeployTest is Script {
+    using MessageHashUtils for bytes32;
+
+    bytes32 constant PERMIT_TYPEHASH =
+        keccak256(
+            "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+        );
+
     EntryPointUpgradeable entryPoint;
     MockNuvoToken nuvoToken;
     NuvoLockUpgradeable nuvoLock;
@@ -40,13 +48,11 @@ contract DeployTest is Script {
         console.log("Deployer address: ", deployer);
 
         vm.startBroadcast(deployerPrivateKey);
+
         deployTopLevel(false);
-        vm.stopBroadcast();
-
         setupParticipant(true);
-
-        vm.startBroadcast(deployerPrivateKey);
         deployHandlers(true);
+
         vm.stopBroadcast();
 
         console.log("\n   submitter: ", submitter);
@@ -134,27 +140,18 @@ contract DeployTest is Script {
         if (_fromEnv) {
             uint256 privKey1 = vm.envUint("PARTICIPANT_KEY_1");
             address participant1 = vm.createWallet(privKey1).addr;
-            vm.startBroadcast(privKey1);
             nuvoToken.mint(participant1, 10 ether);
-            nuvoToken.approve(address(nuvoLock), 1 ether);
-            nuvoLock.lock(1 ether, 300);
-            vm.stopBroadcast();
+            _lockWithPermit(privKey1, participant1, 1 ether, 300);
 
             uint256 privKey2 = vm.envUint("PARTICIPANT_KEY_2");
             address participant2 = vm.createWallet(privKey2).addr;
-            vm.startBroadcast(privKey2);
             nuvoToken.mint(participant2, 10 ether);
-            nuvoToken.approve(address(nuvoLock), 1 ether);
-            nuvoLock.lock(1 ether, 300);
-            vm.stopBroadcast();
+            _lockWithPermit(privKey2, participant2, 1 ether, 300);
 
             uint256 privKey3 = vm.envUint("PARTICIPANT_KEY_3");
             address participant3 = vm.createWallet(privKey3).addr;
-            vm.startBroadcast(privKey3);
             nuvoToken.mint(participant3, 10 ether);
-            nuvoToken.approve(address(nuvoLock), 1 ether);
-            nuvoLock.lock(1 ether, 300);
-            vm.stopBroadcast();
+            _lockWithPermit(privKey3, participant3, 1 ether, 300);
 
             submitter = vm.envAddress("SUBMITTER_ADDR");
             initialParticipants.push(participant1);
@@ -169,5 +166,27 @@ contract DeployTest is Script {
             console.logBytes32(bytes32(key1));
             submitter = participant1;
         }
+    }
+
+    function _lockWithPermit(
+        uint256 _privateKey,
+        address _owner,
+        uint256 _value,
+        uint32 _period
+    ) internal returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                PERMIT_TYPEHASH,
+                _owner,
+                address(nuvoLock),
+                _value,
+                nuvoToken.nonces(_owner),
+                type(uint256).max
+            )
+        );
+        bytes32 domainSeparator = nuvoToken.DOMAIN_SEPARATOR();
+        structHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        (v, r, s) = vm.sign(_privateKey, structHash);
+        nuvoLock.lockWithpermit(_owner, _value, _period, v, r, s);
     }
 }
