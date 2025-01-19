@@ -81,7 +81,7 @@ contract MockData is Script {
     function assetData() public {
         // asset
         AssetParam memory assetParam = AssetParam(18, true, true, 1 ether, 1 ether, "Token_Alias");
-        assetHandler.submitListAssetTask(TICKER, assetParam);
+        // assetHandler.submitListAssetTask(TICKER, assetParam);
         assetHandler.listNewAsset(TICKER, assetParam);
         TokenInfo[] memory testTokenInfo = new TokenInfo[](1);
         testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);

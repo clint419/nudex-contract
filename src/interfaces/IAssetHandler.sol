@@ -47,6 +47,21 @@ struct TokenInfo {
     uint256 withdrawFee;
 }
 
+struct Pair {
+    bytes32 assetA;
+    bytes32 assetB;
+    uint8 state; // TODO: add enum
+    uint8 pairType; // TODO: add enum
+    uint8 decimals;
+    uint8 priceDecimals;
+    uint32 listedTime;
+    uint32 activeTime;
+    uint256 maxTradeBaseToken;
+    uint256 minTradeBaseToken;
+    uint256 maxTradeQuoteToken;
+    uint256 minTradeQuoteToken;
+}
+
 interface IAssetHandler {
     // events
     event RequestUpdateAsset(uint64 taskId, bytes32 indexed ticker, bytes callData);

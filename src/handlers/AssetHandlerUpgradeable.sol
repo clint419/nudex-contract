@@ -61,17 +61,21 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokens[_ticker][_chainId];
     }
 
+    // TODO: add batch operation?
     // Submit a task to list a new asset
     function submitListAssetTask(
-        bytes32 _ticker,
-        AssetParam calldata _assetParam
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64) {
-        require(!nudexAssets[_ticker].isListed, "Asset already listed");
-        return
-            taskManager.submitTask(
+        bytes32[] calldata _tickers,
+        AssetParam[] calldata _assetParams
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        require(_tickers.length == _assetParams.length, "Mismatch data length");
+        taskIds = new uint64[](_tickers.length);
+        for (uint8 i; i < _tickers.length; i++) {
+            require(!nudexAssets[_tickers[i]].isListed, "Asset already listed");
+            taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.listNewAsset.selector, _ticker, _assetParam)
+                abi.encodeWithSelector(this.listNewAsset.selector, _tickers[i], _assetParams[i])
             );
+        }
     }
 
     // List a new asset
@@ -99,6 +103,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit AssetListed(_ticker, _assetParam);
     }
 
+    // TODO: add batch operation?
     // Submit a task to update an existing asset
     function submitAssetTask(
         bytes32 _ticker,

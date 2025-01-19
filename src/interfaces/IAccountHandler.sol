@@ -30,7 +30,7 @@ interface IAccountHandler {
     // errors
     error InvalidAddress();
     error InvalidUserAddress();
-    error InvalidAccountNumber(uint);
+    error InvalidAccountNumber(uint32);
     error InvalidInput();
     error MismatchedAccount(uint32);
     error RegisteredAccount(uint256, string);

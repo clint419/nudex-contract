@@ -120,6 +120,6 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         addressRecord[hash] = _address;
         userMapping[_address][_chain] = _userAddr;
         emit AddressRegistered(_userAddr, _account, _chain, _index, _address);
-        return abi.encodePacked(uint8(1), _account, _chain, _index, _address);
+        return abi.encodePacked(uint8(1), _userAddr, _account, _chain, _index, _address);
     }
 }

@@ -61,6 +61,20 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         return withdrawals[_userAddress][_index];
     }
 
+    function submitSetPauseState(
+        bytes32[] calldata _conditions,
+        bool[] calldata _newStates
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        require(_conditions.length == _newStates.length, "Mismatch data length");
+        taskIds = new uint64[](_conditions.length);
+        for (uint8 i; i < _conditions.length; i++) {
+            taskIds[i] = taskManager.submitTask(
+                msg.sender,
+                abi.encodeWithSelector(this.setPauseState.selector, _conditions[i], _newStates[i])
+            );
+        }
+    }
+
     // TODO: role for adjusting Pause state
     function setPauseState(bytes32 _condition, bool _newState) external onlyRole(ENTRYPOINT_ROLE) {
         pauseState[_condition] = _newState;

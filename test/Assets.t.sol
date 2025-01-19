@@ -56,7 +56,11 @@ contract AssetsTest is BaseTest {
         bytes32 assetTicker = "TOKEN_TICKER_10";
         assertEq(assetHandler.getAllAssets().length, 1);
         AssetParam memory assetParam = AssetParam(10, false, false, 0, 0, "Token02");
-        taskOpts[0].taskId = assetHandler.submitListAssetTask(assetTicker, assetParam);
+        bytes32[] memory tickers = new bytes32[](1);
+        AssetParam[] memory assetParams = new AssetParam[](1);
+        tickers[0] = assetTicker;
+        assetParams[0] = assetParam;
+        assetHandler.submitListAssetTask(tickers, assetParams);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
         assertEq(assetHandler.getAllAssets().length, 2);
