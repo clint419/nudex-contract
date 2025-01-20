@@ -32,3 +32,4 @@ ignition/deployments/chain-31337
 
 # tempory files
 script/temp.sol
+test/temp.sol

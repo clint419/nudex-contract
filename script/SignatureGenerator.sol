@@ -25,7 +25,7 @@ contract SignatureGenerator is Script {
     }
 
     // forge script --rpc-url localhost script/SignatureGenerator.sol --sig "run((address,uint8, uint64, bytes)[],uint256)"
-    function run(uint64[] calldata _taskIds, uint256 _privKey) public pure returns (bytes memory) {
+    function run(uint64[] calldata _taskIds, uint256 _privKey) public view returns (bytes memory) {
         bytes memory encodedData = abi.encode(_taskIds, entryPoint.tssNonce(), block.chainid);
         bytes32 digest = keccak256(encodedData).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_privKey, digest);

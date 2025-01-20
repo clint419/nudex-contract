@@ -78,7 +78,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                     param.account,
                     param.chain,
                     param.index,
-                    uint256(160)
+                    uint256(160) // offset for address
                 )
             );
             emit RequestRegisterAddress(taskIds[i], param);

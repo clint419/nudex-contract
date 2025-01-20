@@ -61,7 +61,6 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokens[_ticker][_chainId];
     }
 
-    // TODO: add batch operation?
     // Submit a task to list a new asset
     function submitListAssetTask(
         bytes32[] calldata _tickers,
