@@ -76,13 +76,13 @@ contract DAOTest is BaseTest {
         skip(1 days);
 
         // 7. Execute the proposal
-        bytes32 taskId = timelock.hashOperationBatch(
-            targets,
-            values,
-            calldatas,
-            0,
-            bytes20(address(dao)) ^ keccak256(bytes(description))
-        );
+        // bytes32 taskId = timelock.hashOperationBatch(
+        //     targets,
+        //     values,
+        //     calldatas,
+        //     0,
+        //     bytes20(address(dao)) ^ keccak256(bytes(description))
+        // );
         dao.execute(targets, values, calldatas, keccak256(bytes(description)));
 
         // Check if the proposal succeeded in changing state
