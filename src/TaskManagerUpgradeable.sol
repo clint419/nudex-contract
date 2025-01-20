@@ -102,6 +102,8 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         Task storage task = tasks[_taskId];
         if (task.state == State.Created) {
             require(_taskId == nextCreatedTaskId++, InvalidTask(_taskId));
+        } else {
+            require(task.state == State.Pending, "Task completed");
         }
         task.state = _state;
         task.updatedAt = uint32(block.timestamp);
