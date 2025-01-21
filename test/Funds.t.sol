@@ -204,7 +204,7 @@ contract FundsTest is BaseTest {
                 100,
                 0
             );
-            taskOperations[i] = TaskOperation(i, State.Pending, "");
+            taskOperations[i] = TaskOperation(i, State.Pending, "", "");
         }
         fundsHandler.submitDepositTask(batchDepositTaskParams);
         for (uint16 i; i < batchSize; ++i) {
@@ -358,6 +358,7 @@ contract FundsTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 i,
                 State.Pending,
+                "",
                 TestHelper.getPaddedString("txHash")
             );
         }

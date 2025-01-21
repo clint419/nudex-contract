@@ -205,8 +205,8 @@ contract MockData is Script {
     }
 
     function updateTask() public {
-        taskManager.updateTask(0, State.Completed, bytes("0x01"));
-        taskManager.updateTask(1, State.Pending, bytes("0x02"));
-        taskManager.updateTask(2, State.Failed, bytes("0x03"));
+        taskManager.updateTask(0, State.Completed, bytes32(uint256(1)));
+        taskManager.updateTask(1, State.Pending, bytes32(uint256(2)));
+        taskManager.updateTask(2, State.Failed, bytes32(uint256(3)));
     }
 }
