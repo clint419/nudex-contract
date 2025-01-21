@@ -68,7 +68,13 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         for (uint8 i; i < _conditions.length; i++) {
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(this.setPauseState.selector, _conditions[i], _newStates[i])
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.setPauseState.selector,
+                        _conditions[i],
+                        _newStates[i]
+                    )
+                )
             );
         }
     }
@@ -93,7 +99,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
-        bytes[] memory data = new bytes[](_params.length);
+        bytes32[] memory dataHash = new bytes[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -105,10 +111,12 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 InvalidAmount()
             );
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
-            data[i] = abi.encodeWithSelector(this.recordDeposit.selector, _params[i]);
+            dataHash[i] = keccak256(
+                abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
+            );
             emit RequestDeposit(taskIds[i], _params[i]);
         }
-        taskIds = taskManager.submitTaskBatch(msg.sender, data);
+        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
     }
 
     /**
@@ -169,16 +177,18 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             );
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.recordWithdrawal.selector,
-                    _params[i].userAddress,
-                    _params[i].chainId,
-                    _params[i].ticker,
-                    _params[i].toAddress,
-                    _params[i].amount,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    256 + (32 * ((addrLength - 1) / 32))
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.recordWithdrawal.selector,
+                        _params[i].userAddress,
+                        _params[i].chainId,
+                        _params[i].ticker,
+                        _params[i].toAddress,
+                        _params[i].amount,
+                        // offset for txHash
+                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                        256 + (32 * ((addrLength - 1) / 32))
+                    )
                 )
             );
             emit RequestWithdrawal(taskIds[i], _params[i]);

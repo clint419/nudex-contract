@@ -66,7 +66,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
         taskId = taskManager.submitTask(
             msg.sender,
-            abi.encodeWithSelector(this.addParticipant.selector, _newParticipant)
+            keccak256(abi.encodeWithSelector(this.addParticipant.selector, _newParticipant))
         );
         emit RequestAddParticipant(taskId, _newParticipant);
     }
@@ -98,7 +98,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         require(isParticipant[_participant], NotParticipant(_participant));
         taskId = taskManager.submitTask(
             msg.sender,
-            abi.encodeWithSelector(this.removeParticipant.selector, _participant)
+            keccak256(abi.encodeWithSelector(this.removeParticipant.selector, _participant))
         );
         emit RequestRemoveParticipant(taskId, _participant);
     }
@@ -135,7 +135,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         require(_newParticipants.length > 2, NotEnoughParticipant());
         taskId = taskManager.submitTask(
             msg.sender,
-            abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants)
+            keccak256(abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants))
         );
         emit RequestResetParticipants(taskId, _newParticipants);
     }

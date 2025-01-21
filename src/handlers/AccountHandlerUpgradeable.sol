@@ -72,13 +72,15 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
 
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.registerNewAddress.selector,
-                    param.userAddr,
-                    param.account,
-                    param.chain,
-                    param.index,
-                    uint256(160) // offset for address
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.registerNewAddress.selector,
+                        param.userAddr,
+                        param.account,
+                        param.chain,
+                        param.index,
+                        uint256(160) // offset for address
+                    )
                 )
             );
             emit RequestRegisterAddress(taskIds[i], param);

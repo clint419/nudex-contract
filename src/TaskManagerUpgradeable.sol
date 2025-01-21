@@ -68,14 +68,13 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     /**
      * @dev Add new task.
      * @param _submitter The submitter of the task.
-     * @param _data The context of the task.
+     * @param _dataHash The context of the task.
      */
     function submitTask(
         address _submitter,
-        bytes calldata _data
+        bytes32 _dataHash
     ) external onlyRole(HANDLER_ROLE) returns (uint64) {
-        bytes32 hash = keccak256(_data);
-        require(!taskHashes[hash], "Duplicate task");
+        require(!taskHashes[_dataHash], "Duplicate task");
         uint64 taskId = nextTaskId++;
         tasks[taskId] = Task({
             id: taskId,
@@ -84,22 +83,21 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             handler: msg.sender,
             createdAt: uint32(block.timestamp),
             updatedAt: uint32(0),
-            result: _data
+            dataHash: _dataHash
         });
-        taskHashes[hash] = true;
+        taskHashes[_dataHash] = true;
 
-        emit TaskSubmitted(taskId, _submitter, msg.sender, _data);
+        emit TaskSubmitted(taskId, _submitter, msg.sender, _dataHash);
         return taskId;
     }
 
     function submitTaskBatch(
         address _submitter,
-        bytes[] calldata _data
+        bytes32[] calldata _dataHash
     ) external onlyRole(HANDLER_ROLE) returns (uint64[] memory taskIds) {
-        taskIds = new uint64[](_data.length);
-        for (uint8 i; i < _data.length; ++i) {
-            bytes32 hash = keccak256(_data[i]);
-            require(!taskHashes[hash], "Duplicate task");
+        taskIds = new uint64[](_dataHash.length);
+        for (uint8 i; i < _dataHash.length; ++i) {
+            require(!taskHashes[_dataHash[i]], "Duplicate task");
             taskIds[i] = nextTaskId++;
             tasks[taskIds[i]] = Task({
                 id: taskIds[i],
@@ -108,23 +106,23 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
                 handler: msg.sender,
                 createdAt: uint32(block.timestamp),
                 updatedAt: uint32(0),
-                result: _data[i]
+                result: _dataHash[i]
             });
-            taskHashes[hash] = true;
+            taskHashes[_dataHash[i]] = true;
         }
-        emit TaskSubmittedBatch(taskIds, _submitter, msg.sender, _data);
+        emit TaskSubmittedBatch(taskIds, _submitter, msg.sender, _dataHash);
     }
 
     /**
      * @dev Update tast state.
      * @param _taskId Id of the task.
      * @param _state The new state of the tast.
-     * @param _result (Optional) The final result of the task.
+     * @param _dataHash (Optional) The hashed data of the task.
      */
     function updateTask(
         uint64 _taskId,
         State _state,
-        bytes calldata _result
+        bytes32 _dataHash
     ) external onlyRole(ENTRYPOINT_ROLE) {
         Task storage task = tasks[_taskId];
         if (task.state == State.Created) {
@@ -134,9 +132,9 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         }
         task.state = _state;
         task.updatedAt = uint32(block.timestamp);
-        if (_result.length > 0) {
-            task.result = _result;
+        if (_dataHash != 0) {
+            task.dataHash = _dataHash;
         }
-        emit TaskUpdated(_taskId, task.submitter, _state, block.timestamp, _result);
+        emit TaskUpdated(_taskId, task.handler, _state, block.timestamp, _dataHash);
     }
 }

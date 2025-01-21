@@ -236,19 +236,21 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
 
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.transfer.selector,
-                    _params[i].fromAddress,
-                    _params[i].toAddress,
-                    _params[i].ticker,
-                    _params[i].chainId,
-                    _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(320) +
-                        (32 * ((fromAddrLength - 1) / 32)) +
-                        (32 * ((toAddrLength - 1) / 32))
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.transfer.selector,
+                        _params[i].fromAddress,
+                        _params[i].toAddress,
+                        _params[i].ticker,
+                        _params[i].chainId,
+                        _params[i].amount,
+                        _params[i].salt,
+                        // offset for txHash
+                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                        uint256(320) +
+                            (32 * ((fromAddrLength - 1) / 32)) +
+                            (32 * ((toAddrLength - 1) / 32))
+                    )
                 )
             );
             emit RequestTransfer(taskIds[i], _params[i]);
@@ -291,16 +293,18 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             require(addrLength > 0, "Invalid address");
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
-                abi.encodeWithSelector(
-                    this.consolidate.selector,
-                    _params[i].fromAddress,
-                    _params[i].ticker,
-                    _params[i].chainId,
-                    _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(224) + (32 * ((addrLength - 1) / 32))
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.consolidate.selector,
+                        _params[i].fromAddress,
+                        _params[i].ticker,
+                        _params[i].chainId,
+                        _params[i].amount,
+                        _params[i].salt,
+                        // offset for txHash
+                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                        uint256(224) + (32 * ((addrLength - 1) / 32))
+                    )
                 )
             );
             emit RequestConsolidate(taskIds[i], _params[i]);
