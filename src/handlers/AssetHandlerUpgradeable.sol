@@ -5,6 +5,7 @@ import {IAssetHandler, AssetParam, TransferParam, ConsolidateTaskParam, NudexAss
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
 
     // Mapping from asset identifiers to their details
@@ -61,27 +62,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokens[_ticker][_chainId];
     }
 
-    // Submit a task to list a new asset
-    function submitListAssetTask(
-        bytes32[] calldata _tickers,
-        AssetParam[] calldata _assetParams
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
-        require(_tickers.length == _assetParams.length, "Mismatch data length");
-        taskIds = new uint64[](_tickers.length);
-        for (uint8 i; i < _tickers.length; i++) {
-            require(!nudexAssets[_tickers[i]].isListed, "Asset already listed");
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                abi.encodeWithSelector(this.listNewAsset.selector, _tickers[i], _assetParams[i])
-            );
-        }
-    }
-
     // List a new asset
     function listNewAsset(
         bytes32 _ticker,
         AssetParam calldata _assetParam
-    ) external onlyRole(ENTRYPOINT_ROLE) {
+    ) external onlyRole(DAO_ROLE) {
         require(!nudexAssets[_ticker].isListed, "Asset already listed");
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         // update listed assets
@@ -102,21 +87,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit AssetListed(_ticker, _assetParam);
     }
 
-    // TODO: add batch operation?
-    // Submit a task to update an existing asset
-    function submitAssetTask(
-        bytes32 _ticker,
-        bytes calldata _callData
-    ) external onlyRole(SUBMITTER_ROLE) checkListing(_ticker) returns (uint64 taskId) {
-        taskId = taskManager.submitTask(msg.sender, _callData);
-        emit RequestUpdateAsset(taskId, _ticker, _callData);
-    }
-
     // Update listed asset
     function updateAsset(
         bytes32 _ticker,
         AssetParam calldata _assetParam
-    ) external onlyRole(ENTRYPOINT_ROLE) {
+    ) external onlyRole(DAO_ROLE) {
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         // update listed assets
         tempNudexAsset.updatedTime = uint32(block.timestamp);
@@ -133,7 +108,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // Delist an existing asset
-    function delistAsset(bytes32 _ticker) external onlyRole(ENTRYPOINT_ROLE) {
+    function delistAsset(bytes32 _ticker) external onlyRole(DAO_ROLE) {
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         uint32 listIndex = tempNudexAsset.listIndex;
         // TODO: do we need to reset linked tokens?
@@ -150,7 +125,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function linkToken(
         bytes32 _ticker,
         TokenInfo[] calldata _tokenInfos
-    ) external onlyRole(ENTRYPOINT_ROLE) {
+    ) external onlyRole(DAO_ROLE) {
         for (uint8 i; i < _tokenInfos.length; ++i) {
             uint64 chainId = _tokenInfos[i].chainId;
             require(linkedTokens[_ticker][chainId].chainId == 0, "Linked Token");
@@ -161,7 +136,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // delete all linked tokens
-    function resetlinkedToken(bytes32 _ticker) public onlyRole(ENTRYPOINT_ROLE) {
+    function resetlinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) {
         uint64[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
         for (uint32 i; i < chainIds.length; ++i) {
@@ -175,7 +150,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         uint64 _chainId,
         bool _isActive
-    ) external onlyRole(ENTRYPOINT_ROLE) {
+    ) external onlyRole(DAO_ROLE) {
         linkedTokens[_ticker][_chainId].isActive = _isActive;
         emit TokenSwitch(_ticker, _chainId, _isActive);
     }
