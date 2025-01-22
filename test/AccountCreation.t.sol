@@ -43,6 +43,15 @@ contract AccountCreationTest is BaseTest {
             0
         );
         accountHandler.submitRegisterTask(taskParams);
+
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            accountHandler.registerNewAddress.selector,
+            msgSender,
+            DEFAULT_ACCOUNT,
+            AddressCategory.BTC,
+            0,
+            uint256(160) // offset for address
+        );
         taskOpts[0].extraData = TestHelper.getPaddedString(depositAddress);
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
