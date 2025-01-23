@@ -17,9 +17,9 @@ Smart contracts used by nuDex deposits and withdraw
 | AssetHandler       | 0xCAC27072105C202d4788527495CfCdeC5B10F84D |
 | FundsHandler       | 0xfB24c3d639Cd56b83868878e947bEcDC25c54893 |
 
-submitter: 0x1D2cd50A3cF3c55a7982AD54F9f364C1e953Bc57
-participant 0 address: 0x3a818294ca1F3C27d7588b123Ec43F2546fa07f4
-participant 1 address: 0x04d9389Cf937b1e6F2258d842e7237E955d6ab04
+submitter: 0x1D2cd50A3cF3c55a7982AD54F9f364C1e953Bc57  
+participant 0 address: 0x3a818294ca1F3C27d7588b123Ec43F2546fa07f4  
+participant 1 address: 0x04d9389Cf937b1e6F2258d842e7237E955d6ab04  
 participant 2 address: 0xf6D37CE75dB465DcDb4c7097bEB9c1D46b171037
 
 > BSC Testnet
@@ -35,7 +35,7 @@ participant 2 address: 0xf6D37CE75dB465DcDb4c7097bEB9c1D46b171037
 | AssetHandler       | 0x430d02F6d38852d16c3b271f66e2E54A9fe51AAd |
 | FundsHandler       | 0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df |
 
-submitter: 0x1D2cd50A3cF3c55a7982AD54F9f364C1e953Bc57
-participant 0 address: 0x3a818294ca1F3C27d7588b123Ec43F2546fa07f4
-participant 1 address: 0x04d9389Cf937b1e6F2258d842e7237E955d6ab04
+submitter: 0x1D2cd50A3cF3c55a7982AD54F9f364C1e953Bc57  
+participant 0 address: 0x3a818294ca1F3C27d7588b123Ec43F2546fa07f4  
+participant 1 address: 0x04d9389Cf937b1e6F2258d842e7237E955d6ab04  
 participant 2 address: 0xf6D37CE75dB465DcDb4c7097bEB9c1D46b171037

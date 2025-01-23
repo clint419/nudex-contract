@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
@@ -33,16 +33,16 @@ contract Deploy is Script {
     function setUp() public {
         // TODO: temporary dao contract
         daoContract = vm.envAddress("DAO_CONTRACT_ADDR");
-        console.log("DAO contract addr: ", daoContract);
         nuvoToken = vm.envAddress("NUVO_TOKEN_ADDR");
         tssSigner = vm.envAddress("TSS_SIGNER_ADDR");
         submitter = vm.envAddress("SUBMITTER_ADDR");
         initialParticipants.push(vm.envAddress("PARTICIPANT_1"));
         initialParticipants.push(vm.envAddress("PARTICIPANT_2"));
         initialParticipants.push(vm.envAddress("PARTICIPANT_3"));
-        proxyAdminContract = address(new ProxyAdmin(daoContract));
+        // proxyAdminContract = address(new ProxyAdmin(daoContract));
 
-        console.log("Proxy Admin", proxyAdminContract);
+        console.log("DAO contract addr: ", daoContract);
+        console.log("TSS signer addr: ", tssSigner);
         console.log("Submitter", submitter);
         for (uint8 i; i < initialParticipants.length; ++i) {
             console.log("participant", i, " address: ", initialParticipants[i]);
@@ -53,9 +53,13 @@ contract Deploy is Script {
         require(initialParticipants.length > 2, "Require at least 3 participant");
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.createWallet(deployerPrivateKey).addr;
-        console.log("Deployer address: ", deployer);
+        console.log("\n  Deployer address: ", deployer);
 
         vm.startBroadcast(deployerPrivateKey);
+        ProxyAdmin proxyAdmin = new ProxyAdmin(daoContract);
+        proxyAdminContract = address(proxyAdmin);
+        console.log("Proxy Admin", proxyAdminContract);
+        console.log("Proxy owner", proxyAdmin.owner());
 
         deployTopLevel(false);
         deployHandlers(true);
