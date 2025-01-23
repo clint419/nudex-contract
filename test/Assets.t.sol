@@ -10,7 +10,7 @@ import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 contract AssetsTest is BaseTest {
     bytes32 public constant TICKER = "TOKEN_TICKER_18";
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
-    uint64 public constant CHAIN_ID = 0;
+    uint64 public constant CHAIN_ID = 1;
     uint256 public constant MIN_DEPOSIT_AMOUNT = 50;
     uint256 public constant MIN_WITHDRAW_AMOUNT = 50;
 
@@ -67,7 +67,7 @@ contract AssetsTest is BaseTest {
         // link new token
         TokenInfo[] memory newTokens = new TokenInfo[](2);
         newTokens[0] = TokenInfo(
-            uint64(0x01),
+            uint64(0x02),
             true,
             uint8(18),
             "0xNewTokenContractAddress",
@@ -75,7 +75,7 @@ contract AssetsTest is BaseTest {
             1 ether
         );
         newTokens[1] = TokenInfo(
-            uint64(0x02),
+            uint64(0x03),
             true,
             uint8(18),
             "0xNewTokenContractAddress2",
@@ -84,7 +84,23 @@ contract AssetsTest is BaseTest {
         );
         assetHandler.linkToken(TICKER, newTokens);
         assertEq(assetHandler.getAllLinkedTokens(TICKER).length, 3);
-        assertEq(assetHandler.linkedTokenList(TICKER, 2), uint64(0x02));
+        assertEq(assetHandler.linkedTokenList(TICKER, 2), uint64(0x03));
+
+        // update linked token
+        TokenInfo memory tokenInfo = TokenInfo(
+            uint64(0x01),
+            true,
+            uint8(18),
+            "0xNewTokenContractAddress",
+            "TOKEN_SYMBOL",
+            2 ether
+        );
+        assetHandler.updateToken(TICKER, tokenInfo);
+        assertEq(assetHandler.getLinkedToken(TICKER, CHAIN_ID).withdrawFee, 2 ether);
+        // fail case: update non-existing token
+        tokenInfo.chainId = uint64(0x99);
+        vm.expectRevert("Token not linked");
+        assetHandler.updateToken(TICKER, tokenInfo);
 
         // deactive token
         assertTrue(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);

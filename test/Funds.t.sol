@@ -11,7 +11,7 @@ import {ITaskManager, State} from "../src/interfaces/ITaskManager.sol";
 contract FundsTest is BaseTest {
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
 
-    uint64 public constant CHAIN_ID = 0;
+    uint64 public constant CHAIN_ID = 1;
     string public constant DEPOSIT_ADDRESS = "0xDepositAddress";
     bytes32 public constant TICKER = "TOKEN_TICKER_18";
     uint256 public constant MIN_DEFAULT_AMOUNT = 50;
@@ -75,6 +75,22 @@ contract FundsTest is BaseTest {
         withdrawTaskParams.push(
             WithdrawalInfo(msgSender, CHAIN_ID, TICKER, DEPOSIT_ADDRESS, DEFAULT_AMOUNT)
         );
+    }
+
+    function test_Pause() public {
+        vm.startPrank(msgSender);
+        assertFalse(fundsHandler.pauseState(TICKER));
+        // pause
+        bytes32[] memory conditions = new bytes32[](1);
+        conditions[0] = TICKER;
+        bool[] memory newStates = new bool[](1);
+        newStates[0] = true;
+        fundsHandler.submitSetPauseState(conditions, newStates);
+
+        signature = _generateOptSignature(taskOpts, tssKey);
+        entryPoint.verifyAndCall(taskOpts, signature);
+        assertTrue(fundsHandler.pauseState(TICKER));
+        vm.stopPrank();
     }
 
     function test_Deposit() public {

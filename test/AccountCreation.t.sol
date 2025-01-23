@@ -60,28 +60,6 @@ contract AccountCreationTest is BaseTest {
         );
         assertEq(accountHandler.userMapping(depositAddress, AddressCategory.BTC), msgSender);
         assertEq(uint8(taskManager.getTaskState(taskOpts[0].taskId)), uint8(State.Completed));
-
-        // fail: already registered
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccountHandler.RegisteredAccount.selector,
-                DEFAULT_ACCOUNT,
-                depositAddress
-            )
-        );
-        accountHandler.submitRegisterTask(taskParams);
-
-        // fail: mismatch account
-        taskParams[0] = AccountRegistrationTaskParam(
-            msgSender,
-            DEFAULT_ACCOUNT + 1,
-            AddressCategory.BTC,
-            0
-        );
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccountHandler.MismatchedAccount.selector, DEFAULT_ACCOUNT)
-        );
-        accountHandler.submitRegisterTask(taskParams);
         vm.stopPrank();
     }
 
@@ -113,9 +91,60 @@ contract AccountCreationTest is BaseTest {
         vm.stopPrank();
 
         // fail case: deposit address as address zero
-        vm.prank(entryPointProxy);
+        vm.startPrank(entryPointProxy);
         vm.expectRevert(IAccountHandler.InvalidAddress.selector);
         accountHandler.registerNewAddress(msgSender, DEFAULT_ACCOUNT, AddressCategory.BTC, 0, "");
+
+        taskParams[0] = AccountRegistrationTaskParam(
+            msgSender,
+            DEFAULT_ACCOUNT,
+            AddressCategory.BTC,
+            0
+        );
+        accountHandler.registerNewAddress(
+            msgSender,
+            DEFAULT_ACCOUNT,
+            AddressCategory.BTC,
+            0,
+            depositAddress
+        );
+
+        // fail: registerNewAddress(): mismatch account
+        uint32 invalidAccount = DEFAULT_ACCOUNT + 1;
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccountHandler.MismatchedAccount.selector, DEFAULT_ACCOUNT)
+        );
+        accountHandler.registerNewAddress(
+            msgSender,
+            invalidAccount,
+            AddressCategory.BTC,
+            0,
+            depositAddress
+        );
+        vm.stopPrank();
+
+        vm.startPrank(msgSender);
+        // fail: already registered
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccountHandler.RegisteredAccount.selector,
+                DEFAULT_ACCOUNT,
+                depositAddress
+            )
+        );
+        accountHandler.submitRegisterTask(taskParams);
+
+        // fail: submitRegisterTask(): mismatch account
+        taskParams[0] = AccountRegistrationTaskParam(
+            msgSender,
+            invalidAccount,
+            AddressCategory.BTC,
+            0
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccountHandler.MismatchedAccount.selector, DEFAULT_ACCOUNT)
+        );
+        accountHandler.submitRegisterTask(taskParams);
     }
 
     function testFuzz_SubmitTaskFuzz(
