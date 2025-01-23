@@ -30,6 +30,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         address _submitter
     ) public initializer {
         __HandlerBase_init(_owner, _entryPoint, _submitter);
+        _grantRole(DAO_ROLE, _owner);
     }
 
     // Check if an asset is listed
@@ -135,12 +136,22 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit LinkToken(_ticker, _tokenInfos);
     }
 
+    function updateToken(
+        bytes32 _ticker,
+        TokenInfo calldata _tokenInfo
+    ) external onlyRole(DAO_ROLE) {
+        uint64 chainId = _tokenInfo.chainId;
+        require(linkedTokens[_ticker][chainId].chainId != 0, "Token not linked");
+        linkedTokens[_ticker][chainId] = _tokenInfo;
+        emit TokenUpdated(_ticker, chainId, _tokenInfo);
+    }
+
     // delete all linked tokens
     function resetlinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) {
         uint64[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
         for (uint32 i; i < chainIds.length; ++i) {
-            linkedTokens[_ticker][chainIds[i]].isActive = false;
+            delete linkedTokens[_ticker][chainIds[i]];
         }
         emit ResetLinkedToken(_ticker);
     }
