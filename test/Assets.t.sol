@@ -28,13 +28,12 @@ contract AssetsTest is BaseTest {
         assetHandler.initialize(daoContract, entryPointProxy, msgSender);
 
         // assign handlers
-        vm.prank(daoContract);
+        vm.startPrank(daoContract);
         assetHandler.grantRole(FUNDS_ROLE, msgSender);
         handlers.push(assetHandlerProxy);
         taskManager.initialize(daoContract, entryPointProxy, handlers);
 
         // list new asset and token
-        vm.startPrank(entryPointProxy);
         AssetParam memory assetParam = AssetParam(
             18,
             true,
@@ -51,29 +50,18 @@ contract AssetsTest is BaseTest {
     }
 
     function test_AssetOperations() public {
-        vm.startPrank(msgSender);
+        vm.startPrank(daoContract);
         // list asset
         bytes32 assetTicker = "TOKEN_TICKER_10";
         assertEq(assetHandler.getAllAssets().length, 1);
         AssetParam memory assetParam = AssetParam(10, false, false, 0, 0, "Token02");
-        bytes32[] memory tickers = new bytes32[](1);
-        AssetParam[] memory assetParams = new AssetParam[](1);
-        tickers[0] = assetTicker;
-        assetParams[0] = assetParam;
-        assetHandler.submitListAssetTask(tickers, assetParams);
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        assetHandler.listNewAsset(assetTicker, assetParam);
         assertEq(assetHandler.getAllAssets().length, 2);
 
         // update listed asset
         assertEq(assetHandler.getAssetDetails(TICKER).decimals, 18);
         assetParam = AssetParam(10, false, true, 0, MIN_WITHDRAW_AMOUNT, "Token01");
-        taskOpts[0].taskId = assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.updateAsset.selector, TICKER, assetParam)
-        );
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        assetHandler.updateAsset(TICKER, assetParam);
         assertEq(assetHandler.getAssetDetails(TICKER).decimals, 10);
 
         // link new token
@@ -94,43 +82,23 @@ contract AssetsTest is BaseTest {
             "TOKEN_SYMBOL2",
             5 ether
         );
-        taskOpts[0].taskId = assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.linkToken.selector, TICKER, newTokens)
-        );
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        assetHandler.linkToken(TICKER, newTokens);
         assertEq(assetHandler.getAllLinkedTokens(TICKER).length, 3);
         assertEq(assetHandler.linkedTokenList(TICKER, 2), uint64(0x02));
 
         // deactive token
         assertTrue(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);
-        taskOpts[0].taskId = assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.tokenSwitch.selector, TICKER, CHAIN_ID, false)
-        );
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        assetHandler.tokenSwitch(TICKER, CHAIN_ID, false);
         assertFalse(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);
 
         // unlink tokens
-        taskOpts[0].taskId = assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.resetlinkedToken.selector, TICKER)
-        );
+        assetHandler.resetlinkedToken(TICKER);
         signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
-        assertEq(assetHandler.getAllLinkedTokens(TICKER).length, 0);
         assertFalse(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);
 
         // delist asset
         assertTrue(assetHandler.isAssetListed(TICKER));
-        taskOpts[0].taskId = assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.delistAsset.selector, TICKER)
-        );
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        assetHandler.delistAsset(TICKER);
         vm.expectRevert(abi.encodeWithSelector(IAssetHandler.AssetNotListed.selector, TICKER));
         assetHandler.getAssetDetails(TICKER);
         assertFalse(assetHandler.isAssetListed(TICKER));

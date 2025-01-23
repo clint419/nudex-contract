@@ -85,10 +85,6 @@ contract MockData is Script {
         assetHandler.listNewAsset(TICKER, assetParam);
         TokenInfo[] memory testTokenInfo = new TokenInfo[](1);
         testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
-        assetHandler.submitAssetTask(
-            TICKER,
-            abi.encodeWithSelector(assetHandler.linkToken.selector, TICKER, testTokenInfo)
-        );
         assetHandler.linkToken(TICKER, testTokenInfo);
 
         // consolidate
