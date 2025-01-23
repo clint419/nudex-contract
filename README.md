@@ -26,14 +26,14 @@ participant 2 address: 0xf6D37CE75dB465DcDb4c7097bEB9c1D46b171037
 
 | Contract           | Address                                    |
 | ------------------ | ------------------------------------------ |
-| EntryPoint         | 0x6a3E7DE1B9eFa5aEe328E4B40d8Adc8E36D363AA |
 | NuvoToken          | 0x59a955D74ef2137D9687bcdd076494789bda6c8F |
-| NuvoLock           | 0x9e8D581303D3c8EaE84AFF156650B062A89ef9EF |
-| TaskManager        | 0x910973f2d9E4d5eDe0C8F0E58Ce707b25F908128 |
-| ParticipantHandler | 0xB0CA87f571448f707aC184C699FA2493bFfD06cc |
-| AccountHandler     | 0x28D2451fB93D3E8051522f455d64b4cEa80F7254 |
-| AssetHandler       | 0x12cDb526df03A045894836fD75d612B08F50F428 |
-| FundsHandler       | 0x176D5a6DC9237A6e6f7ba94379c552E9BCB230f2 |
+| EntryPoint         | 0x55dc78110e37755d1eFe2E87B66329E7806D1526 |
+| NuvoLock           | 0x5E5fB10cc591833356d078C26d9dc0789c7968b8 |
+| TaskManager        | 0xc4a03dBb6e21b0423Bc80c2B0255211F3Ee685D0 |
+| ParticipantHandler | 0xE0398106fA22800e9a00a37A9f186Cc19b2e289C |
+| AccountHandler     | 0x7c1Cb3f0c590d253f2ddA5f9Bd2D71E53024c8D3 |
+| AssetHandler       | 0x430d02F6d38852d16c3b271f66e2E54A9fe51AAd |
+| FundsHandler       | 0xba7E53478Cb713d1eb46C1170F7c85bbd2BFc6Df |
 
 submitter: 0x1D2cd50A3cF3c55a7982AD54F9f364C1e953Bc57
 participant 0 address: 0x3a818294ca1F3C27d7588b123Ec43F2546fa07f4

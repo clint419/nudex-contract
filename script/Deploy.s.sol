@@ -54,6 +54,7 @@ contract Deploy is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.createWallet(deployerPrivateKey).addr;
         console.log("Deployer address: ", deployer);
+
         vm.startBroadcast(deployerPrivateKey);
 
         deployTopLevel(false);
