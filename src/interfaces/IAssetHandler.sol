@@ -108,8 +108,6 @@ interface IAssetHandler {
 
     // errors
     error AssetNotListed(bytes32 ticker);
-    error InvalidAddress();
-    error InvalidAmount();
 
     // Check if an asset is listed
     function isAssetListed(bytes32 _ticker) external view returns (bool);

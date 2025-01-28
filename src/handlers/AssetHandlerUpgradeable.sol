@@ -112,14 +112,20 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return keccak256(abi.encodePacked(_assetB, _assetA));
     }
 
-    function addPair(Pair[] calldata _pairs) external onlyRole(DAO_ROLE) {
+    function addPair(Pair[] memory _pairs) external onlyRole(DAO_ROLE) {
         for (uint8 i; i < _pairs.length; i++) {
+            require(nudexAssets[_pairs[i].assetA].isListed, AssetNotListed(_pairs[i].assetA));
+            require(nudexAssets[_pairs[i].assetB].isListed, AssetNotListed(_pairs[i].assetB));
+
             uint256 index = pairs.length;
             if (_pairs[i].assetA < _pairs[i].assetB) {
                 assetPairIndex[_getPairHash(_pairs[i].assetA, _pairs[i].assetB)] = index;
             } else {
                 assetPairIndex[_getPairHash(_pairs[i].assetB, _pairs[i].assetA)] = index;
             }
+
+            _pairs[i].listedTime = uint32(block.timestamp);
+            _pairs[i].activeTime = uint32(block.timestamp);
             pairs.push(_pairs[i]);
             emit PairAdded(_pairs[i], index);
         }
@@ -135,7 +141,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function updateAsset(
         bytes32 _ticker,
         AssetParam calldata _assetParam
-    ) external onlyRole(DAO_ROLE) {
+    ) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         // update listed assets
         tempNudexAsset.updatedTime = uint32(block.timestamp);
@@ -152,7 +158,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // Delist an existing asset
-    function delistAsset(bytes32 _ticker) external onlyRole(DAO_ROLE) {
+    function delistAsset(bytes32 _ticker) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         uint32 listIndex = tempNudexAsset.listIndex;
         // TODO: do we need to reset linked tokens?
@@ -169,7 +175,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function linkToken(
         bytes32 _ticker,
         TokenInfo[] calldata _tokenInfos
-    ) external onlyRole(DAO_ROLE) {
+    ) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         for (uint8 i; i < _tokenInfos.length; ++i) {
             uint64 chainId = _tokenInfos[i].chainId;
             require(linkedTokens[_ticker][chainId].chainId == 0, "Linked Token");
@@ -182,7 +188,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function updateToken(
         bytes32 _ticker,
         TokenInfo calldata _tokenInfo
-    ) external onlyRole(DAO_ROLE) {
+    ) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         uint64 chainId = _tokenInfo.chainId;
         require(linkedTokens[_ticker][chainId].chainId != 0, "Token not linked");
         linkedTokens[_ticker][chainId] = _tokenInfo;
@@ -190,7 +196,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // delete all linked tokens
-    function resetlinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) {
+    function resetlinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) checkListing(_ticker) {
         uint64[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
         for (uint32 i; i < chainIds.length; ++i) {
@@ -204,7 +210,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         uint64 _chainId,
         bool _isActive
-    ) external onlyRole(DAO_ROLE) {
+    ) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         linkedTokens[_ticker][_chainId].isActive = _isActive;
         emit TokenSwitch(_ticker, _chainId, _isActive);
     }
@@ -223,10 +229,10 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
         for (uint8 i; i < _params.length; i++) {
-            require(_params[i].amount > 0, InvalidAmount());
+            require(_params[i].amount > 0, "Invalid amount");
             uint256 fromAddrLength = bytes(_params[i].fromAddress).length;
             uint256 toAddrLength = bytes(_params[i].toAddress).length;
-            require(fromAddrLength > 0 && toAddrLength > 0, InvalidAddress());
+            require(fromAddrLength > 0 && toAddrLength > 0, "Invalid address");
 
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
@@ -277,10 +283,10 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         for (uint8 i; i < _params.length; i++) {
             require(
                 _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
-                InvalidAmount()
+                "Invalid amount"
             );
             uint256 addrLength = bytes(_params[i].fromAddress).length;
-            require(addrLength > 0, InvalidAddress());
+            require(addrLength > 0, "Invalid address");
             taskIds[i] = taskManager.submitTask(
                 msg.sender,
                 abi.encodeWithSelector(
