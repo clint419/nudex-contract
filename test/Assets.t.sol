@@ -4,7 +4,7 @@ import "./BaseTest.sol";
 import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {IAssetHandler, AssetParam, ConsolidateTaskParam, TransferParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, Pair, PairState, PairType, ConsolidateTaskParam, TransferParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
 import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 
 contract AssetsTest is BaseTest {
@@ -52,10 +52,10 @@ contract AssetsTest is BaseTest {
     function test_AssetOperations() public {
         vm.startPrank(daoContract);
         // list asset
-        bytes32 assetTicker = "TOKEN_TICKER_10";
+        bytes32 assetBTicker = "TOKEN_TICKER_10";
         assertEq(assetHandler.getAllAssets().length, 1);
         AssetParam memory assetParam = AssetParam(10, false, false, 0, 0, "Token02");
-        assetHandler.listNewAsset(assetTicker, assetParam);
+        assetHandler.listNewAsset(assetBTicker, assetParam);
         assertEq(assetHandler.getAllAssets().length, 2);
 
         // update listed asset
@@ -63,6 +63,29 @@ contract AssetsTest is BaseTest {
         assetParam = AssetParam(10, false, true, 0, MIN_WITHDRAW_AMOUNT, "Token01");
         assetHandler.updateAsset(TICKER, assetParam);
         assertEq(assetHandler.getAssetDetails(TICKER).decimals, 10);
+
+        // add pair
+        Pair[] memory pairs = new Pair[](1);
+        pairs[0] = Pair(
+            TICKER,
+            assetBTicker,
+            PairState.Active,
+            PairType.Spot,
+            18,
+            18,
+            0,
+            0,
+            3 ether,
+            1 ether,
+            30 ether,
+            10 ether
+        );
+        assetHandler.addPair(pairs);
+        // check index, should match 1 both ways
+        assertEq(assetHandler.getPairIndex(TICKER, assetBTicker), 1);
+        assertEq(assetHandler.getPairIndex(assetBTicker, TICKER), 1);
+        assertEq(assetHandler.getPairInfo(assetBTicker, TICKER).listedTime, block.timestamp);
+        assertEq(assetHandler.getPairInfo(assetBTicker, TICKER).activeTime, block.timestamp);
 
         // link new token
         TokenInfo[] memory newTokens = new TokenInfo[](2);
@@ -131,12 +154,12 @@ contract AssetsTest is BaseTest {
 
         // empty from address
         consolidateParams[0] = ConsolidateTaskParam("", TICKER, CHAIN_ID, amount);
-        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
+        vm.expectRevert("Invalid address");
         assetHandler.submitConsolidateTask(consolidateParams);
 
         // below minimum amount
         consolidateParams[0] = ConsolidateTaskParam(fromAddr, TICKER, CHAIN_ID, 0);
-        vm.expectRevert(IAssetHandler.InvalidAmount.selector);
+        vm.expectRevert("Invalid amount");
         assetHandler.submitConsolidateTask(consolidateParams);
 
         // correct amount
@@ -171,17 +194,17 @@ contract AssetsTest is BaseTest {
 
         // empty from address
         transferParams[0] = TransferParam("", toAddr, TICKER, CHAIN_ID, amount);
-        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
+        vm.expectRevert("Invalid address");
         assetHandler.submitTransferTask(transferParams);
 
         // empty from address
         transferParams[0] = TransferParam(fromAddr, "", TICKER, CHAIN_ID, amount);
-        vm.expectRevert(IAssetHandler.InvalidAddress.selector);
+        vm.expectRevert("Invalid address");
         assetHandler.submitTransferTask(transferParams);
 
         // below minimum amount
         transferParams[0] = TransferParam(fromAddr, toAddr, TICKER, CHAIN_ID, 0);
-        vm.expectRevert(IAssetHandler.InvalidAmount.selector);
+        vm.expectRevert("Invalid amount");
         assetHandler.submitTransferTask(transferParams);
 
         // correct amount
