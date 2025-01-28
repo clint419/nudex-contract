@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+enum PairState {
+    Inactive,
+    Active,
+    Paused
+}
+
+enum PairType {
+    Spot,
+    Contract
+}
+
 struct AssetParam {
     uint8 decimals;
     bool depositEnabled;
@@ -50,8 +61,8 @@ struct TokenInfo {
 struct Pair {
     bytes32 assetA;
     bytes32 assetB;
-    uint8 state; // TODO: add enum
-    uint8 pairType; // TODO: add enum
+    PairState pairState;
+    PairType pairType;
     uint8 decimals;
     uint8 priceDecimals;
     uint32 listedTime;
@@ -68,8 +79,11 @@ interface IAssetHandler {
     event AssetListed(bytes32 indexed ticker, AssetParam assetParam);
     event AssetUpdated(bytes32 indexed ticker, AssetParam assetParam);
     event AssetDelisted(bytes32 indexed ticker);
+
+    event PairAdded(Pair pair, uint256 index);
+
     event LinkToken(bytes32 indexed ticker, TokenInfo[] tokens);
-    event TokenUpdated(bytes32 indexed ticker, uint64 indexed chainId, TokenInfo token);
+    event TokenUpdated(bytes32 indexed ticker, TokenInfo token);
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
 

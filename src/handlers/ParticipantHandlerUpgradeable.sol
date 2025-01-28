@@ -153,7 +153,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         }
         // add new participants
         for (uint8 i; i < _newParticipants.length; ++i) {
-            require(isParticipant[_newParticipants[i]], NotParticipant(_newParticipants[i]));
             require(
                 nuvoLock.lockedBalanceOf(_newParticipants[i]) > 0,
                 NotEligible(_newParticipants[i])

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IAssetHandler, AssetParam, TransferParam, ConsolidateTaskParam, NudexAsset, TokenInfo} from "../interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, TransferParam, ConsolidateTaskParam, NudexAsset, Pair, PairState, PairType, TokenInfo} from "../interfaces/IAssetHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
@@ -15,6 +15,9 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     mapping(bytes32 ticker => mapping(uint64 chainId => TokenInfo)) public linkedTokens;
     mapping(bytes32 ticker => mapping(uint64 chainId => ConsolidateTaskParam[]))
         public consolidateRecords;
+
+    Pair[] private pairs;
+    mapping(bytes32 hashedPair => uint256 index) private assetPairIndex;
 
     modifier checkListing(bytes32 _ticker) {
         require(nudexAssets[_ticker].isListed, AssetNotListed(_ticker));
@@ -31,6 +34,9 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) public initializer {
         __HandlerBase_init(_owner, _entryPoint, _submitter);
         _grantRole(DAO_ROLE, _owner);
+
+        // push empty pair, reserving index 0 for empty pair
+        pairs.push(Pair(0, 0, PairState.Inactive, PairType.Spot, 0, 0, 0, 0, 0, 0, 0, 0));
     }
 
     // Check if an asset is listed
@@ -88,6 +94,43 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit AssetListed(_ticker, _assetParam);
     }
 
+    function getPairInfo(bytes32 _assetA, bytes32 _assetB) external view returns (Pair memory) {
+        return pairs[getPairIndex(_assetA, _assetB)];
+    }
+
+    function getPairIndex(bytes32 _assetA, bytes32 _assetB) public view returns (uint256) {
+        if (_assetA < _assetB) {
+            return assetPairIndex[_getPairHash(_assetA, _assetB)];
+        }
+        return assetPairIndex[_getPairHash(_assetB, _assetA)];
+    }
+
+    function _getPairHash(bytes32 _assetA, bytes32 _assetB) internal pure returns (bytes32) {
+        if (_assetA < _assetB) {
+            return keccak256(abi.encodePacked(_assetA, _assetB));
+        }
+        return keccak256(abi.encodePacked(_assetB, _assetA));
+    }
+
+    function addPair(Pair[] calldata _pairs) external onlyRole(DAO_ROLE) {
+        for (uint8 i; i < _pairs.length; i++) {
+            uint256 index = pairs.length;
+            if (_pairs[i].assetA < _pairs[i].assetB) {
+                assetPairIndex[_getPairHash(_pairs[i].assetA, _pairs[i].assetB)] = index;
+            } else {
+                assetPairIndex[_getPairHash(_pairs[i].assetB, _pairs[i].assetA)] = index;
+            }
+            pairs.push(_pairs[i]);
+            emit PairAdded(_pairs[i], index);
+        }
+    }
+
+    function removePair(bytes32 _assetA, bytes32 _assetB) external onlyRole(DAO_ROLE) {
+        pairs[getPairIndex(_assetA, _assetB)] = pairs[pairs.length - 1];
+        pairs.pop();
+        assetPairIndex[_getPairHash(_assetA, _assetB)] = 0;
+    }
+
     // Update listed asset
     function updateAsset(
         bytes32 _ticker,
@@ -143,7 +186,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         uint64 chainId = _tokenInfo.chainId;
         require(linkedTokens[_ticker][chainId].chainId != 0, "Token not linked");
         linkedTokens[_ticker][chainId] = _tokenInfo;
-        emit TokenUpdated(_ticker, chainId, _tokenInfo);
+        emit TokenUpdated(_ticker, _tokenInfo);
     }
 
     // delete all linked tokens

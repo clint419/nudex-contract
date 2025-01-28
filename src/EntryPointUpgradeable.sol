@@ -103,6 +103,7 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
         );
 
         tssSigner = _newSigner;
+        emit SetSigner(_newSigner);
     }
 
     /**

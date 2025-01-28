@@ -10,6 +10,7 @@ struct TaskOperation {
 }
 
 contract IEntryPoint {
+    event SetSigner(address indexed newSigner);
     event SubmitterChosen(address indexed newSubmitter);
     event SubmitterRotationRequested(address indexed requester, address indexed currentSubmitter);
 
