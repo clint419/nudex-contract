@@ -11,6 +11,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     uint64 public nextTaskId;
     uint64 public nextCreatedTaskId;
     mapping(uint64 => Task) public tasks;
+    mapping(bytes32 hash => bool) public taskHashes;
 
     function initialize(
         address _owner,
@@ -73,6 +74,8 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         address _submitter,
         bytes calldata _data
     ) external onlyRole(HANDLER_ROLE) returns (uint64) {
+        bytes32 hash = keccak256(_data);
+        require(!taskHashes[hash], "Duplicate task");
         uint64 taskId = nextTaskId++;
         tasks[taskId] = Task({
             id: taskId,
@@ -83,9 +86,33 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             updatedAt: uint32(0),
             result: _data
         });
+        taskHashes[hash] = true;
 
         emit TaskSubmitted(taskId, _submitter, msg.sender, _data);
         return taskId;
+    }
+
+    function submitTaskBatch(
+        address _submitter,
+        bytes[] calldata _data
+    ) external onlyRole(HANDLER_ROLE) returns (uint64[] memory taskIds) {
+        taskIds = new uint64[](_data.length);
+        for (uint8 i; i < _data.length; ++i) {
+            bytes32 hash = keccak256(_data[i]);
+            require(!taskHashes[hash], "Duplicate task");
+            taskIds[i] = nextTaskId++;
+            tasks[taskIds[i]] = Task({
+                id: taskIds[i],
+                state: State.Created,
+                submitter: _submitter,
+                handler: msg.sender,
+                createdAt: uint32(block.timestamp),
+                updatedAt: uint32(0),
+                result: _data[i]
+            });
+            taskHashes[hash] = true;
+        }
+        emit TaskSubmittedBatch(taskIds, _submitter, msg.sender, _data);
     }
 
     /**

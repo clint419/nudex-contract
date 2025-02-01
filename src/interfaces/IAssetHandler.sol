@@ -27,6 +27,7 @@ struct TransferParam {
     bytes32 ticker;
     uint64 chainId;
     uint256 amount;
+    bytes32 salt;
 }
 
 struct ConsolidateTaskParam {
@@ -34,6 +35,7 @@ struct ConsolidateTaskParam {
     bytes32 ticker;
     uint64 chainId;
     uint256 amount;
+    bytes32 salt;
 }
 
 struct NudexAsset {

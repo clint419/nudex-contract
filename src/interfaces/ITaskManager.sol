@@ -25,6 +25,12 @@ interface ITaskManager {
         address indexed handler,
         bytes callData
     );
+    event TaskSubmittedBatch(
+        uint64[] indexed taskIds,
+        address indexed submitter,
+        address indexed handler,
+        bytes[] callData
+    );
     event TaskUpdated(
         uint64 indexed taskId,
         address indexed submitter,

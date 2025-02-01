@@ -243,6 +243,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
+                    _params[i].salt,
                     // offset for txHash
                     // @dev "-1" if it is exact 32 bytes it does not take one extra slot
                     uint256(320) +
@@ -263,6 +264,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         uint64 _chainId,
         uint256 _amount,
+        bytes32 _salt,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
         emit Transfer(_ticker, _chainId, _fromAddress, _toAddress, _amount, _txHash);
@@ -295,6 +297,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
+                    _params[i].salt,
                     // offset for txHash
                     // @dev "-1" if it is exact 32 bytes it does not take one extra slot
                     uint256(224) + (32 * ((addrLength - 1) / 32))
@@ -312,10 +315,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         bytes32 _ticker,
         uint64 _chainId,
         uint256 _amount,
+        bytes32 _salt,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
         consolidateRecords[_ticker][_chainId].push(
-            ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount)
+            ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount, _salt)
         );
         emit Consolidate(_ticker, _chainId, _fromAddress, _amount, _txHash);
     }
