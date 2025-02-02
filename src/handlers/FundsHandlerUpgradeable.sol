@@ -17,7 +17,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         assetHandler = IAssetHandler(_assetHandler);
     }
 
-    // _owner: EntryPoint contract
     function initialize(
         address _owner,
         address _entryPoint,
@@ -94,6 +93,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
+        bytes[] memory data = new bytes[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -105,12 +105,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 InvalidAmount()
             );
             require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
-            );
+            data[i] = abi.encodeWithSelector(this.recordDeposit.selector, _params[i]);
             emit RequestDeposit(taskIds[i], _params[i]);
         }
+        taskIds = taskManager.submitTaskBatch(msg.sender, data);
     }
 
     /**

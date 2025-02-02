@@ -52,5 +52,10 @@ interface ITaskManager {
 
     function submitTask(address _submitter, bytes calldata _context) external returns (uint64);
 
+    function submitTaskBatch(
+        address _submitter,
+        bytes[] calldata _context
+    ) external returns (uint64[] memory);
+
     function updateTask(uint64 _taskId, State _state, bytes calldata _result) external;
 }
