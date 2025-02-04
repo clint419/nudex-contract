@@ -18,6 +18,7 @@ struct WithdrawalInfo {
     bytes32 ticker;
     string toAddress;
     uint256 amount;
+    bytes32 salt;
 }
 
 interface IFundsHandler {
@@ -56,6 +57,7 @@ interface IFundsHandler {
         bytes32 _ticker,
         string calldata _toAddress,
         uint256 _amount,
+        bytes32 _salt,
         string calldata _txHash
     ) external returns (bytes memory);
 

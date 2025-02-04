@@ -106,7 +106,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
                 handler: msg.sender,
                 createdAt: uint32(block.timestamp),
                 updatedAt: uint32(0),
-                result: _dataHash[i]
+                dataHash: _dataHash[i]
             });
             taskHashes[_dataHash[i]] = true;
         }
@@ -117,13 +117,8 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
      * @dev Update tast state.
      * @param _taskId Id of the task.
      * @param _state The new state of the tast.
-     * @param _dataHash (Optional) The hashed data of the task.
      */
-    function updateTask(
-        uint64 _taskId,
-        State _state,
-        bytes32 _dataHash
-    ) external onlyRole(ENTRYPOINT_ROLE) {
+    function updateTask(uint64 _taskId, State _state) external onlyRole(ENTRYPOINT_ROLE) {
         Task storage task = tasks[_taskId];
         if (task.state == State.Created) {
             require(_taskId == nextCreatedTaskId++, InvalidTask(_taskId));
@@ -132,9 +127,6 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         }
         task.state = _state;
         task.updatedAt = uint32(block.timestamp);
-        if (_dataHash != 0) {
-            task.dataHash = _dataHash;
-        }
-        emit TaskUpdated(_taskId, task.handler, _state, block.timestamp, _dataHash);
+        emit TaskUpdated(_taskId, task.handler, _state, block.timestamp);
     }
 }

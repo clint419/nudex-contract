@@ -186,31 +186,31 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
         // ) external onlyCurrentSubmitter nonReentrant {
         // require(_verifyOperation(_operations, tssNonce++, _signature), InvalidSigner(msg.sender));
         bool success;
-        bytes memory callData;
         Task memory task;
         for (uint8 i; i < _operations.length; ) {
             task = taskManager.getTask(_operations[i].taskId);
             // fail task
             if (_operations[i].state == State.Failed) {
-                taskManager.updateTask(_operations[i].taskId, State.Failed, 0);
+                taskManager.updateTask(_operations[i].taskId, State.Failed);
                 continue;
             }
             require(keccak256(_operations[i].initialCalldata) == task.dataHash, "Hash mismatch");
-            callData = bytes.concat(_operations[i].initialCalldata, _operations[i].extraData);
             // execute task
             if (_operations[i].state == State.Completed) {
-                (success, ) = task.handler.call(callData);
+                (success, ) = task.handler.call(
+                    bytes.concat(_operations[i].initialCalldata, _operations[i].extraData)
+                );
                 if (success) {
                     // success
-                    taskManager.updateTask(task.id, State.Completed, 0);
+                    taskManager.updateTask(task.id, State.Completed);
                 } else {
                     // fail
-                    taskManager.updateTask(task.id, State.Failed, 0);
+                    taskManager.updateTask(task.id, State.Failed);
                 }
             }
             // pending task
             else if (_operations[i].state == State.Pending) {
-                taskManager.updateTask(_operations[i].taskId, State.Pending, keccak256(callData));
+                taskManager.updateTask(_operations[i].taskId, State.Pending);
             }
 
             unchecked {

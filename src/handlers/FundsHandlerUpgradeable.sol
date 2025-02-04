@@ -99,7 +99,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
-        bytes32[] memory dataHash = new bytes[](_params.length);
+        bytes32[] memory dataHash = new bytes32[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -152,6 +152,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      * ticker The ticker of the asset.
      * chainId The chain id of the asset.
      * amount The amount to deposit.
+     * salt The salt for withdrawal.
      */
     function submitWithdrawTask(
         WithdrawalInfo[] calldata _params
@@ -185,9 +186,10 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                         _params[i].ticker,
                         _params[i].toAddress,
                         _params[i].amount,
+                        _params[i].salt,
                         // offset for txHash
                         // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                        256 + (32 * ((addrLength - 1) / 32))
+                        uint256(288) + (32 * ((addrLength - 1) / 32))
                     )
                 )
             );
@@ -204,11 +206,12 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         bytes32 _ticker,
         string calldata _toAddress,
         uint256 _amount,
+        bytes32 _salt,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(!pauseState[_ticker] && !pauseState[bytes32(uint256(_chainId))], Paused());
         withdrawals[_userAddress].push(
-            WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount)
+            WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount, _salt)
         );
         assetHandler.withdraw(_ticker, _chainId, _amount);
         emit WithdrawalRecorded(_userAddress, _ticker, _chainId, _toAddress, _amount, _txHash);

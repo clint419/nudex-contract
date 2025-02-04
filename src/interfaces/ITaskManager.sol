@@ -23,20 +23,19 @@ interface ITaskManager {
         uint64 indexed taskId,
         address indexed submitter,
         address indexed handler,
-        bytes32 callData
+        bytes32 dataHash
     );
     event TaskSubmittedBatch(
         uint64[] indexed taskIds,
         address indexed submitter,
         address indexed handler,
-        bytes[] callData
+        bytes32[] dataHashs
     );
     event TaskUpdated(
         uint64 indexed taskId,
         address indexed submitter,
         State indexed state,
-        uint256 updateTime,
-        bytes32 dataHash
+        uint256 updateTime
     );
 
     error EmptyTask();
@@ -57,5 +56,5 @@ interface ITaskManager {
         bytes32[] calldata _context
     ) external returns (uint64[] memory);
 
-    function updateTask(uint64 _taskId, State _state, bytes32 _dataHash) external;
+    function updateTask(uint64 _taskId, State _state) external;
 }
