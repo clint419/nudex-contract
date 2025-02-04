@@ -202,10 +202,10 @@ contract EntryPointUpgradeable is IEntryPoint, Initializable, ReentrancyGuardUpg
                 );
                 if (success) {
                     // success
-                    taskManager.updateTask(task.id, State.Completed);
+                    taskManager.updateTask(_operations[i].taskId, State.Completed);
                 } else {
                     // fail
-                    taskManager.updateTask(task.id, State.Failed);
+                    taskManager.updateTask(_operations[i].taskId, State.Failed);
                 }
             }
             // pending task

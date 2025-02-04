@@ -89,7 +89,7 @@ interface IAssetHandler {
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
 
-    event RequestTransfer(uint64 taskId, TransferParam param);
+    event RequestTransfer(uint64[] taskIds, TransferParam[] params);
     event Transfer(
         bytes32 indexed ticker,
         uint64 indexed chainId,
@@ -98,7 +98,7 @@ interface IAssetHandler {
         uint256 amount,
         string txHash
     );
-    event RequestConsolidate(uint64 taskId, ConsolidateTaskParam param);
+    event RequestConsolidate(uint64[] taskIds, ConsolidateTaskParam[] params);
     event Consolidate(
         bytes32 indexed ticker,
         uint64 indexed chainId,

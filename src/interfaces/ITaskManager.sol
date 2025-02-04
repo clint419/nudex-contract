@@ -9,7 +9,6 @@ enum State {
 }
 
 struct Task {
-    uint64 id;
     State state;
     address submitter;
     address handler;

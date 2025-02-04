@@ -228,33 +228,32 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         TransferParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
+        bytes32[] memory dataHash = new bytes32[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(_params[i].amount > 0, "Invalid amount");
             uint256 fromAddrLength = bytes(_params[i].fromAddress).length;
             uint256 toAddrLength = bytes(_params[i].toAddress).length;
             require(fromAddrLength > 0 && toAddrLength > 0, "Invalid address");
 
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                keccak256(
-                    abi.encodeWithSelector(
-                        this.transfer.selector,
-                        _params[i].fromAddress,
-                        _params[i].toAddress,
-                        _params[i].ticker,
-                        _params[i].chainId,
-                        _params[i].amount,
-                        _params[i].salt,
-                        // offset for txHash
-                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                        uint256(352) +
-                            (32 * ((fromAddrLength - 1) / 32)) +
-                            (32 * ((toAddrLength - 1) / 32))
-                    )
+            dataHash[i] = keccak256(
+                abi.encodeWithSelector(
+                    this.transfer.selector,
+                    _params[i].fromAddress,
+                    _params[i].toAddress,
+                    _params[i].ticker,
+                    _params[i].chainId,
+                    _params[i].amount,
+                    _params[i].salt,
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    uint256(352) +
+                        (32 * ((fromAddrLength - 1) / 32)) +
+                        (32 * ((toAddrLength - 1) / 32))
                 )
             );
-            emit RequestTransfer(taskIds[i], _params[i]);
         }
+        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
+        emit RequestTransfer(taskIds, _params);
     }
 
     /**
@@ -284,6 +283,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         ConsolidateTaskParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
+        bytes32[] memory dataHash = new bytes32[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
@@ -291,24 +291,22 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
             );
             uint256 addrLength = bytes(_params[i].fromAddress).length;
             require(addrLength > 0, "Invalid address");
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                keccak256(
-                    abi.encodeWithSelector(
-                        this.consolidate.selector,
-                        _params[i].fromAddress,
-                        _params[i].ticker,
-                        _params[i].chainId,
-                        _params[i].amount,
-                        _params[i].salt,
-                        // offset for txHash
-                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                        uint256(256) + (32 * ((addrLength - 1) / 32))
-                    )
+            dataHash[i] = keccak256(
+                abi.encodeWithSelector(
+                    this.consolidate.selector,
+                    _params[i].fromAddress,
+                    _params[i].ticker,
+                    _params[i].chainId,
+                    _params[i].amount,
+                    _params[i].salt,
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    uint256(256) + (32 * ((addrLength - 1) / 32))
                 )
             );
-            emit RequestConsolidate(taskIds[i], _params[i]);
         }
+        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
+        emit RequestConsolidate(taskIds, _params);
     }
 
     /**

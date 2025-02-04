@@ -159,6 +159,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         require(_params.length > 0, "FundsHandlerUpgradeable: empty input");
         taskIds = new uint64[](_params.length);
+        bytes32[] memory dataHash = new bytes32[](_params.length);
         for (uint8 i; i < _params.length; i++) {
             require(
                 !pauseState[_params[i].ticker] && !pauseState[bytes32(uint256(_params[i].chainId))],
@@ -176,25 +177,23 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                keccak256(
-                    abi.encodeWithSelector(
-                        this.recordWithdrawal.selector,
-                        _params[i].userAddress,
-                        _params[i].chainId,
-                        _params[i].ticker,
-                        _params[i].toAddress,
-                        _params[i].amount,
-                        _params[i].salt,
-                        // offset for txHash
-                        // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                        uint256(288) + (32 * ((addrLength - 1) / 32))
-                    )
+            dataHash[i] = keccak256(
+                abi.encodeWithSelector(
+                    this.recordWithdrawal.selector,
+                    _params[i].userAddress,
+                    _params[i].chainId,
+                    _params[i].ticker,
+                    _params[i].toAddress,
+                    _params[i].amount,
+                    _params[i].salt,
+                    // offset for txHash
+                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
+                    uint256(288) + (32 * ((addrLength - 1) / 32))
                 )
             );
             emit RequestWithdrawal(taskIds[i], _params[i]);
         }
+        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
     }
 
     /**

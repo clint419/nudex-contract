@@ -47,6 +47,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         AccountRegistrationTaskParam[] calldata _params
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
         taskIds = new uint64[](_params.length);
+        bytes32[] memory dataHash = new bytes32[](_params.length);
         AccountRegistrationTaskParam memory param;
         for (uint8 i; i < _params.length; i++) {
             param = _params[i];
@@ -70,21 +71,19 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
                 )
             );
 
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                keccak256(
-                    abi.encodeWithSelector(
-                        this.registerNewAddress.selector,
-                        param.userAddr,
-                        param.account,
-                        param.chain,
-                        param.index,
-                        uint256(160) // offset for address
-                    )
+            dataHash[i] = keccak256(
+                abi.encodeWithSelector(
+                    this.registerNewAddress.selector,
+                    param.userAddr,
+                    param.account,
+                    param.chain,
+                    param.index,
+                    uint256(160) // offset for address
                 )
             );
-            emit RequestRegisterAddress(taskIds[i], param);
         }
+        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
+        emit RequestRegisterAddress(taskIds, _params);
     }
 
     /**

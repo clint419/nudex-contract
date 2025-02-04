@@ -73,11 +73,10 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     function submitTask(
         address _submitter,
         bytes32 _dataHash
-    ) external onlyRole(HANDLER_ROLE) returns (uint64) {
+    ) external onlyRole(HANDLER_ROLE) returns (uint64 taskId) {
         require(!taskHashes[_dataHash], "Duplicate task");
-        uint64 taskId = nextTaskId++;
+        taskId = nextTaskId++;
         tasks[taskId] = Task({
-            id: taskId,
             state: State.Created,
             submitter: _submitter,
             handler: msg.sender,
@@ -88,19 +87,18 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         taskHashes[_dataHash] = true;
 
         emit TaskSubmitted(taskId, _submitter, msg.sender, _dataHash);
-        return taskId;
     }
 
     function submitTaskBatch(
         address _submitter,
         bytes32[] calldata _dataHash
     ) external onlyRole(HANDLER_ROLE) returns (uint64[] memory taskIds) {
+        // FIXME: check batch size?
         taskIds = new uint64[](_dataHash.length);
         for (uint8 i; i < _dataHash.length; ++i) {
             require(!taskHashes[_dataHash[i]], "Duplicate task");
             taskIds[i] = nextTaskId++;
             tasks[taskIds[i]] = Task({
-                id: taskIds[i],
                 state: State.Created,
                 submitter: _submitter,
                 handler: msg.sender,
