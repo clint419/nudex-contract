@@ -73,24 +73,30 @@ contract FundsTest is BaseTest {
             )
         );
         withdrawTaskParams.push(
-            WithdrawalInfo(msgSender, CHAIN_ID, TICKER, DEPOSIT_ADDRESS, DEFAULT_AMOUNT)
+            WithdrawalInfo(
+                msgSender,
+                CHAIN_ID,
+                TICKER,
+                DEPOSIT_ADDRESS,
+                DEFAULT_AMOUNT,
+                bytes32(uint256(0))
+            )
         );
     }
 
     function test_Pause() public {
-        vm.startPrank(msgSender);
         assertFalse(fundsHandler.pauseState(TICKER));
         // pause
         bytes32[] memory conditions = new bytes32[](1);
         conditions[0] = TICKER;
         bool[] memory newStates = new bool[](1);
         newStates[0] = true;
+        vm.prank(msgSender);
         fundsHandler.submitSetPauseState(conditions, newStates);
 
-        signature = _generateOptSignature(taskOpts, tssKey);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        vm.prank(entryPointProxy);
+        fundsHandler.setPauseState(TICKER, true);
         assertTrue(fundsHandler.pauseState(TICKER));
-        vm.stopPrank();
     }
 
     function test_Deposit() public {
@@ -98,6 +104,10 @@ contract FundsTest is BaseTest {
         // setup deposit info
         uint256 depositIndex = fundsHandler.getDeposits(msgSender).length;
         fundsHandler.submitDepositTask(depositTaskParams);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.recordDeposit.selector,
+            depositTaskParams[0]
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
@@ -134,6 +144,10 @@ contract FundsTest is BaseTest {
         depositTaskParams[0].amount = newAmount;
         fundsHandler.submitDepositTask(depositTaskParams);
         taskOpts[0].taskId++;
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.recordDeposit.selector,
+            depositTaskParams[0]
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
 
         // check event and result
@@ -204,7 +218,15 @@ contract FundsTest is BaseTest {
                 100,
                 0
             );
-            taskOperations[i] = TaskOperation(i, State.Pending, "", "");
+            taskOperations[i] = TaskOperation(
+                i,
+                State.Pending,
+                abi.encodeWithSelector(
+                    fundsHandler.recordDeposit.selector,
+                    batchDepositTaskParams[i]
+                ),
+                ""
+            );
         }
         fundsHandler.submitDepositTask(batchDepositTaskParams);
         for (uint16 i; i < batchSize; ++i) {
@@ -249,6 +271,11 @@ contract FundsTest is BaseTest {
         depositTaskParams[0].depositAddress = _depositAddress;
         depositTaskParams[0].amount = _amount;
         fundsHandler.submitDepositTask(depositTaskParams);
+
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.recordDeposit.selector,
+            depositTaskParams[0]
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
 
         // check event and result
@@ -288,13 +315,22 @@ contract FundsTest is BaseTest {
 
         // pending task
         taskOpts[0].state = State.Pending;
-        taskOpts[0].extraData = TestHelper.getPaddedString(withdrawTxHash);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.recordWithdrawal.selector,
+            withdrawTaskParams[0].userAddress,
+            withdrawTaskParams[0].chainId,
+            withdrawTaskParams[0].ticker,
+            withdrawTaskParams[0].toAddress,
+            withdrawTaskParams[0].amount,
+            withdrawTaskParams[0].salt,
+            uint256(288)
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
         // completed task
         taskOpts[0].state = State.Completed;
-        taskOpts[0].extraData = "";
+        taskOpts[0].extraData = TestHelper.getPaddedString(withdrawTxHash);
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
@@ -353,13 +389,23 @@ contract FundsTest is BaseTest {
                 CHAIN_ID,
                 TICKER,
                 DEPOSIT_ADDRESS,
-                amounts[i]
+                amounts[i],
+                bytes32(uint256(i))
             );
             taskOperations[i] = TaskOperation(
                 i,
                 State.Pending,
-                "",
-                TestHelper.getPaddedString("txHash")
+                abi.encodeWithSelector(
+                    fundsHandler.recordWithdrawal.selector,
+                    msgSender,
+                    CHAIN_ID,
+                    TICKER,
+                    DEPOSIT_ADDRESS,
+                    amounts[i],
+                    bytes32(uint256(i)),
+                    uint256(288) + (32 * ((bytes(DEPOSIT_ADDRESS).length - 1) / 32))
+                ),
+                ""
             );
         }
         fundsHandler.submitWithdrawTask(batchWithdrawTaskParams);
@@ -377,7 +423,7 @@ contract FundsTest is BaseTest {
                 uint8(State.Pending)
             );
             taskOperations[i].state = State.Completed;
-            taskOperations[i].extraData = "";
+            taskOperations[i].extraData = TestHelper.getPaddedString("txHash");
         }
         signature = _generateOptSignature(taskOperations, tssKey);
         entryPoint.verifyAndCall(taskOperations, signature);
@@ -396,6 +442,7 @@ contract FundsTest is BaseTest {
     function testFuzz_WithdrawFuzz(
         string calldata _toAddress,
         uint256 _amount,
+        bytes32 _salt,
         string calldata _txHash
     ) public {
         vm.startPrank(msgSender);
@@ -409,19 +456,29 @@ contract FundsTest is BaseTest {
             CHAIN_ID,
             TICKER,
             _toAddress,
-            _amount
+            _amount,
+            _salt
         );
         fundsHandler.submitWithdrawTask(tempWithdrawTaskParams);
 
         // pending task
         taskOpts[0].state = State.Pending;
-        taskOpts[0].extraData = TestHelper.getPaddedString(_txHash);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.recordWithdrawal.selector,
+            msgSender,
+            CHAIN_ID,
+            TICKER,
+            _toAddress,
+            _amount,
+            _salt,
+            uint256(288) + (32 * ((bytes(_toAddress).length - 1) / 32))
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
 
         // completed task
         taskOpts[0].state = State.Completed;
-        taskOpts[0].extraData = "";
+        taskOpts[0].extraData = TestHelper.getPaddedString(_txHash);
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);

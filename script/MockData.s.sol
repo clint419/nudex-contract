@@ -97,13 +97,52 @@ contract MockData is Script {
 
         // consolidate
         ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
-        consolidateTaskParams[0] = ConsolidateTaskParam("fromAddr1", TICKER, CHAIN_ID, 1 ether);
-        consolidateTaskParams[1] = ConsolidateTaskParam("fromAddr2", TICKER, CHAIN_ID, 2.5 ether);
-        consolidateTaskParams[2] = ConsolidateTaskParam("fromAddr3", TICKER, CHAIN_ID, 3.3 ether);
+        consolidateTaskParams[0] = ConsolidateTaskParam(
+            "fromAddr1",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            bytes32(uint256(0))
+        );
+        consolidateTaskParams[1] = ConsolidateTaskParam(
+            "fromAddr2",
+            TICKER,
+            CHAIN_ID,
+            2.5 ether,
+            bytes32(uint256(1))
+        );
+        consolidateTaskParams[2] = ConsolidateTaskParam(
+            "fromAddr3",
+            TICKER,
+            CHAIN_ID,
+            3.3 ether,
+            bytes32(uint256(2))
+        );
         assetHandler.submitConsolidateTask(consolidateTaskParams);
-        // assetHandler.consolidate("fromAddr1", TICKER, CHAIN_ID, 1 ether, "consolidate txHash1");
-        // assetHandler.consolidate("fromAddr2", TICKER, CHAIN_ID, 2.5 ether, "consolidate txHash2");
-        // assetHandler.consolidate("fromAddr3", TICKER, CHAIN_ID, 3.3 ether, "consolidate txHash3");
+        assetHandler.consolidate(
+            "fromAddr1",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            bytes32(uint256(0)),
+            "consolidate txHash1"
+        );
+        assetHandler.consolidate(
+            "fromAddr2",
+            TICKER,
+            CHAIN_ID,
+            2.5 ether,
+            bytes32(uint256(1)),
+            "consolidate txHash2"
+        );
+        assetHandler.consolidate(
+            "fromAddr3",
+            TICKER,
+            CHAIN_ID,
+            3.3 ether,
+            bytes32(uint256(2)),
+            "consolidate txHash3"
+        );
 
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, false);
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, true);
@@ -132,7 +171,8 @@ contract MockData is Script {
             _chainId,
             _ticker,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-            1 ether
+            1 ether,
+            bytes32(uint256(0))
         );
 
         fundsHandler.submitWithdrawTask(withdrawalInfos);
@@ -205,8 +245,8 @@ contract MockData is Script {
     }
 
     function updateTask() public {
-        taskManager.updateTask(0, State.Completed, bytes32(uint256(1)));
-        taskManager.updateTask(1, State.Pending, bytes32(uint256(2)));
-        taskManager.updateTask(2, State.Failed, bytes32(uint256(3)));
+        taskManager.updateTask(0, State.Completed);
+        taskManager.updateTask(1, State.Pending);
+        taskManager.updateTask(2, State.Failed);
     }
 }

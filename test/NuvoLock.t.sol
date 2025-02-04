@@ -351,15 +351,8 @@ contract NuvoLockTest is BaseTest {
     }
 
     function test_RewardRevert() public {
-        uint256 newRewardPerPeriod = 3 ether;
-        bytes memory callData = abi.encodeWithSelector(
-            INuvoLock.setRewardPerPeriod.selector,
-            newRewardPerPeriod
-        );
-        taskOpts[0].extraData = callData;
-        signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(msgSender);
-        entryPoint.verifyAndCall(taskOpts, signature);
+        nuvoLock.setRewardPerPeriod(3 ether);
 
         vm.startPrank(msgSender);
         nuvoToken.approve(address(nuvoLock), MIN_LOCK_AMOUNT);

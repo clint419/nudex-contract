@@ -87,6 +87,10 @@ contract ParticipantTest is BaseTest {
         // successfully add new user
         vm.prank(msgSender);
         taskOpts[0].taskId = participantHandler.submitAddParticipantTask(newParticipant);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            participantHandler.addParticipant.selector,
+            newParticipant
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
         vm.expectEmit(true, true, true, true);
@@ -109,6 +113,10 @@ contract ParticipantTest is BaseTest {
         // remove the added user
         vm.prank(msgSender);
         taskOpts[0].taskId = participantHandler.submitRemoveParticipantTask(newParticipant);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            participantHandler.removeParticipant.selector,
+            newParticipant
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
         vm.expectEmit(true, true, true, true);
@@ -147,7 +155,10 @@ contract ParticipantTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 participantHandler.submitAddParticipantTask(newParticipants[i]),
                 State.Completed,
-                "",
+                abi.encodeWithSelector(
+                    participantHandler.addParticipant.selector,
+                    newParticipants[i]
+                ),
                 ""
             );
         }
@@ -163,7 +174,10 @@ contract ParticipantTest is BaseTest {
             taskOperations[i] = TaskOperation(
                 participantHandler.submitRemoveParticipantTask(newParticipants[i]),
                 State.Completed,
-                "",
+                abi.encodeWithSelector(
+                    participantHandler.removeParticipant.selector,
+                    newParticipants[i]
+                ),
                 ""
             );
         }
@@ -179,6 +193,10 @@ contract ParticipantTest is BaseTest {
         _lockFor(_newParticipant);
         // add new user through entryPoint
         taskOpts[0].taskId = participantHandler.submitAddParticipantTask(_newParticipant);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            participantHandler.addParticipant.selector,
+            _newParticipant
+        );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
         entryPoint.verifyAndCall(taskOpts, signature);
