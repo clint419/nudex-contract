@@ -44,6 +44,9 @@ contract AccountCreationTest is BaseTest {
         );
         accountHandler.submitRegisterTask(taskParams);
 
+        vm.expectRevert("Duplicate task");
+        accountHandler.submitRegisterTask(taskParams);
+
         taskOpts[0].initialCalldata = abi.encodeWithSelector(
             accountHandler.registerNewAddress.selector,
             msgSender,
