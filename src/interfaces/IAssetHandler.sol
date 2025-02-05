@@ -40,7 +40,7 @@ struct TokenInfo {
     uint8 decimals;
     string contractAddress; // Address for ERC20, Inscription, or 0x0 for BTC/Ordinal/Native token
     string symbol;
-    uint256 withdrawFee;
+    uint256 withdrawFee; // constant value
 }
 
 struct Pair {

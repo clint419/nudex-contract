@@ -7,6 +7,7 @@ import {ITaskManager, State, Task} from "./interfaces/ITaskManager.sol";
 contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
     bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
     bytes32 public constant HANDLER_ROLE = keccak256("HANDLER_ROLE");
+    uint256 public constant MAX_BATCH_SIZE = 200;
 
     uint64 public nextTaskId;
     uint64 public nextCreatedTaskId;
@@ -93,7 +94,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         address _submitter,
         bytes32[] calldata _dataHash
     ) external onlyRole(HANDLER_ROLE) returns (uint64[] memory taskIds) {
-        // FIXME: check batch size?
+        require(_dataHash.length <= MAX_BATCH_SIZE, "Exceed max batch size");
         taskIds = new uint64[](_dataHash.length);
         for (uint8 i; i < _dataHash.length; ++i) {
             require(!taskHashes[_dataHash[i]], "Duplicate task");

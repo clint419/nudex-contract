@@ -79,10 +79,10 @@ contract MockData is Script {
     function run() public {
         vm.startBroadcast(deployerPrivateKey);
 
-        // assetData();
+        assetData();
         fundsData(0x4e554445585f555344435f313800000000000000000000000000000000000000, 59902);
-        // accountData();
-        // updateTask();
+        accountData();
+        updateTask();
 
         vm.stopBroadcast();
     }
@@ -113,7 +113,7 @@ contract MockData is Script {
             0
         );
         fundsHandler.submitDepositTask(depositInfos);
-        // fundsHandler.recordDeposit(depositInfos[0]);
+        fundsHandler.recordDeposit(depositInfos[0]);
 
         // withdraw
         WithdrawalInfo[] memory withdrawalInfos = new WithdrawalInfo[](1);
@@ -127,16 +127,18 @@ contract MockData is Script {
         );
 
         fundsHandler.submitWithdrawTask(withdrawalInfos);
-        // fundsHandler.recordWithdrawal(
-        //     deployer,
-        //     _chainId,
-        //     _ticker,
-        //     "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
-        //     1 ether,
-        //     "TxHash"
-        // );
-        // fundsHandler.setPauseState(_ticker, false);
-        // fundsHandler.setPauseState(bytes32(uint256(_chainId)), false);
+        fundsHandler.recordWithdrawal(
+            deployer,
+            _chainId,
+            _ticker,
+            "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
+            1 ether,
+            "TxHash"
+        );
+
+        // pause
+        fundsHandler.setPauseState(_ticker, false);
+        fundsHandler.setPauseState(bytes32(uint256(_chainId)), false);
 
         // consolidate
         ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);

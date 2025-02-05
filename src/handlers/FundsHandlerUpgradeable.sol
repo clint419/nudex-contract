@@ -151,6 +151,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
+            // TODO: withdraw fee
+            // _params[i].amount -= fee;
             dataHash[i] = keccak256(
                 abi.encodeWithSelector(
                     this.recordWithdrawal.selector,
@@ -185,6 +187,8 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         withdrawals[_userAddress].push(
             WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount, _salt)
         );
+        // TODO: transfer withdraw fee
+        // emit INIP20.NIP20TokenEvent_mintb(adminAddress, _param.ticker, withdrawFee);
         emit WithdrawalRecorded(_userAddress, _ticker, _chainId, _toAddress, _amount, _txHash);
         return abi.encode(uint8(1), _userAddress, _chainId, _ticker, _toAddress, _amount, _txHash);
     }

@@ -38,6 +38,15 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         pairs.push(Pair(0, 0, PairState.Inactive, PairType.Spot, 0, 0, 0, 0, 0, 0, 0, 0));
     }
 
+    // Check if an asset is allowed for accessing
+    function isAssetAllowed(bytes32 _ticker, uint64 _chainId) external view returns (bool) {
+        return
+            nudexAssets[_ticker].isListed &&
+            linkedTokens[_ticker][_chainId].isActive &&
+            !pauseState[_ticker] &&
+            !pauseState[bytes32(uint256(_chainId))];
+    }
+
     // Check if an asset is listed
     function isAssetListed(bytes32 _ticker) external view returns (bool) {
         return nudexAssets[_ticker].isListed;
@@ -186,8 +195,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     function delistAsset(bytes32 _ticker) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         NudexAsset storage tempNudexAsset = nudexAssets[_ticker];
         uint32 listIndex = tempNudexAsset.listIndex;
-        // TODO: do we need to reset linked tokens?
-        // resetlinkedToken(_ticker);
+        resetLinkedToken(_ticker);
         tempNudexAsset.isListed = false;
         tempNudexAsset.updatedTime = uint32(block.timestamp);
         assetTickerList[listIndex] = assetTickerList[assetTickerList.length - 1];
@@ -221,7 +229,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     }
 
     // delete all linked tokens
-    function resetlinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) checkListing(_ticker) {
+    function resetLinkedToken(bytes32 _ticker) public onlyRole(DAO_ROLE) checkListing(_ticker) {
         uint64[] memory chainIds = linkedTokenList[_ticker];
         delete linkedTokenList[_ticker];
         for (uint32 i; i < chainIds.length; ++i) {
@@ -238,13 +246,5 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     ) external onlyRole(DAO_ROLE) checkListing(_ticker) {
         linkedTokens[_ticker][_chainId].isActive = _isActive;
         emit TokenSwitch(_ticker, _chainId, _isActive);
-    }
-
-    function isAssetAllowed(bytes32 _ticker, uint64 _chainId) external view returns (bool) {
-        return
-            nudexAssets[_ticker].isListed &&
-            linkedTokens[_ticker][_chainId].isActive &&
-            !pauseState[_ticker] &&
-            !pauseState[bytes32(uint256(_chainId))];
     }
 }

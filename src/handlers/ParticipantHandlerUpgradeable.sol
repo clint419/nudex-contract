@@ -58,6 +58,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     /**
      * @dev Submit task to add new participant.
      * @param _newParticipant The new participant to be added.
+     * @param _salt Salt for randomness.
      */
     function submitAddParticipantTask(
         address _newParticipant,
@@ -92,6 +93,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     /**
      * @dev Submit task to remove participant.
      * @param _participant The participant to be removed.
+     * @param _salt Salt for randomness.
      */
     function submitRemoveParticipantTask(
         address _participant,
@@ -132,6 +134,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     /**
      * @dev Submit task to reset the whole participants.
      * @param _newParticipants The new participant list.
+     * @param _salt Salt for randomness.
      */
     function submitResetParticipantsTask(
         address[] calldata _newParticipants,
