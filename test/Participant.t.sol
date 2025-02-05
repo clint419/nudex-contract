@@ -66,7 +66,7 @@ contract ParticipantTest is BaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(IParticipantHandler.NotEligible.selector, newParticipant)
         );
-        participantHandler.submitAddParticipantTask(newParticipant);
+        participantHandler.submitAddParticipantTask(newParticipant, bytes32(uint256(0)));
 
         vm.startPrank(newParticipant);
         nuvoToken.mint(newParticipant, 100 ether);
@@ -82,14 +82,18 @@ contract ParticipantTest is BaseTest {
                 ENTRYPOINT_ROLE
             )
         );
-        participantHandler.addParticipant(newParticipant);
+        participantHandler.addParticipant(newParticipant, bytes32(uint256(0)));
 
         // successfully add new user
         vm.prank(msgSender);
-        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(newParticipant);
+        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(
+            newParticipant,
+            bytes32(uint256(1))
+        );
         taskOpts[0].initialCalldata = abi.encodeWithSelector(
             participantHandler.addParticipant.selector,
-            newParticipant
+            newParticipant,
+            bytes32(uint256(1))
         );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
@@ -102,7 +106,7 @@ contract ParticipantTest is BaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(IParticipantHandler.AlreadyParticipant.selector, newParticipant)
         );
-        participantHandler.submitAddParticipantTask(newParticipant);
+        participantHandler.submitAddParticipantTask(newParticipant, bytes32(uint256(2)));
     }
 
     function test_RemoveParticipant() public {
@@ -112,10 +116,14 @@ contract ParticipantTest is BaseTest {
 
         // remove the added user
         vm.prank(msgSender);
-        taskOpts[0].taskId = participantHandler.submitRemoveParticipantTask(newParticipant);
+        taskOpts[0].taskId = participantHandler.submitRemoveParticipantTask(
+            newParticipant,
+            bytes32(uint256(0))
+        );
         taskOpts[0].initialCalldata = abi.encodeWithSelector(
             participantHandler.removeParticipant.selector,
-            newParticipant
+            newParticipant,
+            bytes32(uint256(0))
         );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
@@ -128,7 +136,7 @@ contract ParticipantTest is BaseTest {
         vm.prank(msgSender);
         // fail: cannot remove user when there is only 3 participant left
         vm.expectRevert(IParticipantHandler.NotEnoughParticipant.selector);
-        participantHandler.submitRemoveParticipantTask(msgSender);
+        participantHandler.submitRemoveParticipantTask(msgSender, bytes32(uint256(0)));
 
         // add one valid partcipant
         address newParticipant = makeAddr("newParticipant");
@@ -140,7 +148,7 @@ contract ParticipantTest is BaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(IParticipantHandler.NotParticipant.selector, randomAddress)
         );
-        participantHandler.submitRemoveParticipantTask(randomAddress);
+        participantHandler.submitRemoveParticipantTask(randomAddress, bytes32(uint256(1)));
     }
 
     function test_massAddAndRemove() public {
@@ -153,11 +161,15 @@ contract ParticipantTest is BaseTest {
             newParticipants[i] = makeAddr(UintToString.uint256ToString(i));
             _lockFor(newParticipants[i]);
             taskOperations[i] = TaskOperation(
-                participantHandler.submitAddParticipantTask(newParticipants[i]),
+                participantHandler.submitAddParticipantTask(
+                    newParticipants[i],
+                    bytes32(uint256(i))
+                ),
                 State.Completed,
                 abi.encodeWithSelector(
                     participantHandler.addParticipant.selector,
-                    newParticipants[i]
+                    newParticipants[i],
+                    bytes32(uint256(i))
                 ),
                 ""
             );
@@ -172,11 +184,15 @@ contract ParticipantTest is BaseTest {
         for (uint8 i; i < batchSize; ++i) {
             // remove a participant
             taskOperations[i] = TaskOperation(
-                participantHandler.submitRemoveParticipantTask(newParticipants[i]),
+                participantHandler.submitRemoveParticipantTask(
+                    newParticipants[i],
+                    bytes32(uint256(i))
+                ),
                 State.Completed,
                 abi.encodeWithSelector(
                     participantHandler.removeParticipant.selector,
-                    newParticipants[i]
+                    newParticipants[i],
+                    bytes32(uint256(i))
                 ),
                 ""
             );
@@ -192,10 +208,14 @@ contract ParticipantTest is BaseTest {
     function _addParticipant(address _newParticipant) internal returns (address) {
         _lockFor(_newParticipant);
         // add new user through entryPoint
-        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(_newParticipant);
+        taskOpts[0].taskId = participantHandler.submitAddParticipantTask(
+            _newParticipant,
+            bytes32(uint256(999))
+        );
         taskOpts[0].initialCalldata = abi.encodeWithSelector(
             participantHandler.addParticipant.selector,
-            _newParticipant
+            _newParticipant,
+            bytes32(uint256(999))
         );
         signature = _generateOptSignature(taskOpts, tssKey);
         vm.prank(entryPoint.nextSubmitter());
