@@ -5,7 +5,7 @@ import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
 import {FundsHandlerUpgradeable} from "../src/handlers/FundsHandlerUpgradeable.sol";
-import {IFundsHandler, DepositInfo, WithdrawalInfo} from "../src/interfaces/IFundsHandler.sol";
+import {IFundsHandler, DepositInfo, WithdrawalInfo, ConsolidateTaskParam, TransferParam} from "../src/interfaces/IFundsHandler.sol";
 import {ITaskManager, State} from "../src/interfaces/ITaskManager.sol";
 
 contract FundsTest is BaseTest {
@@ -18,6 +18,7 @@ contract FundsTest is BaseTest {
     uint256 public constant MIN_WITHDRAW_AMOUNT = 50;
     uint256 public constant DEFAULT_AMOUNT = 1 ether;
 
+    AssetHandlerUpgradeable assetHandler;
     FundsHandlerUpgradeable public fundsHandler;
 
     DepositInfo[] public depositTaskParams;
@@ -31,7 +32,7 @@ contract FundsTest is BaseTest {
             address(new AssetHandlerUpgradeable(address(taskManager))),
             daoContract
         );
-        AssetHandlerUpgradeable assetHandler = AssetHandlerUpgradeable(ahProxy);
+        assetHandler = AssetHandlerUpgradeable(ahProxy);
         assetHandler.initialize(thisAddr, thisAddr, msgSender);
         AssetParam memory assetParam = AssetParam(
             18,
@@ -82,21 +83,6 @@ contract FundsTest is BaseTest {
                 bytes32(uint256(0))
             )
         );
-    }
-
-    function test_Pause() public {
-        assertFalse(fundsHandler.pauseState(TICKER));
-        // pause
-        bytes32[] memory conditions = new bytes32[](1);
-        conditions[0] = TICKER;
-        bool[] memory newStates = new bool[](1);
-        newStates[0] = true;
-        vm.prank(msgSender);
-        fundsHandler.submitSetPauseState(conditions, newStates);
-
-        vm.prank(entryPointProxy);
-        fundsHandler.setPauseState(TICKER, true);
-        assertTrue(fundsHandler.pauseState(TICKER));
     }
 
     function test_Deposit() public {
@@ -189,12 +175,6 @@ contract FundsTest is BaseTest {
         vm.expectRevert(IFundsHandler.InvalidAddress.selector);
         fundsHandler.submitDepositTask(depositTaskParams);
         vm.stopPrank();
-
-        vm.prank(entryPointProxy);
-        fundsHandler.setPauseState(TICKER, true);
-        vm.expectRevert(IFundsHandler.Paused.selector);
-        vm.prank(msgSender);
-        fundsHandler.submitDepositTask(depositTaskParams);
     }
 
     function test_DepositBatch() public {
@@ -365,14 +345,6 @@ contract FundsTest is BaseTest {
         vm.expectRevert(IFundsHandler.InvalidAddress.selector);
         fundsHandler.submitWithdrawTask(withdrawTaskParams);
         vm.stopPrank();
-
-        // fail case: paused
-        vm.prank(entryPointProxy);
-        fundsHandler.setPauseState(TICKER, true);
-        withdrawTaskParams[0].userAddress = msgSender;
-        vm.expectRevert(IFundsHandler.Paused.selector);
-        vm.prank(msgSender);
-        fundsHandler.submitWithdrawTask(withdrawTaskParams);
     }
 
     function test_WithdrawBatch() public {
@@ -490,6 +462,147 @@ contract FundsTest is BaseTest {
             _amount,
             _txHash
         );
+        entryPoint.verifyAndCall(taskOpts, signature);
+        vm.stopPrank();
+    }
+
+    function test_Consolidate() public {
+        vm.startPrank(msgSender);
+        string memory fromAddr = "0xFromAddress";
+        uint256 amount = 1 ether;
+        string memory txHash = "consolidate_txHash";
+        ConsolidateTaskParam[] memory consolidateParams = new ConsolidateTaskParam[](1);
+
+        // empty from address
+        consolidateParams[0] = ConsolidateTaskParam(
+            "",
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(0))
+        );
+        vm.expectRevert("Invalid address");
+        fundsHandler.submitConsolidateTask(consolidateParams);
+
+        // below minimum amount
+        consolidateParams[0] = ConsolidateTaskParam(
+            fromAddr,
+            TICKER,
+            CHAIN_ID,
+            0,
+            bytes32(uint256(0))
+        );
+        vm.expectRevert("Invalid amount");
+        fundsHandler.submitConsolidateTask(consolidateParams);
+
+        // correct amount
+        consolidateParams[0] = ConsolidateTaskParam(
+            fromAddr,
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(0))
+        );
+        fundsHandler.submitConsolidateTask(consolidateParams);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.consolidate.selector,
+            fromAddr,
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(0)),
+            uint256(256) // offset for address
+        );
+        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
+        signature = _generateOptSignature(taskOpts, tssKey);
+
+        vm.expectEmit(true, true, true, true);
+        emit IFundsHandler.Consolidate(TICKER, CHAIN_ID, fromAddr, amount, txHash);
+        entryPoint.verifyAndCall(taskOpts, signature);
+        (
+            string memory tempAddr,
+            bytes32 tempTicker,
+            uint64 tempChainId,
+            uint256 tempAmount,
+
+        ) = fundsHandler.consolidateRecords(TICKER, CHAIN_ID, 0);
+        assertEq(
+            abi.encode(tempAddr, tempTicker, tempChainId, tempAmount),
+            abi.encode(fromAddr, TICKER, CHAIN_ID, amount)
+        );
+        vm.stopPrank();
+    }
+
+    function test_Transfer() public {
+        vm.startPrank(msgSender);
+        string memory fromAddr = "0xFromAddress";
+        string memory toAddr = "0xToAddress";
+        uint256 amount = 1 ether;
+        string memory txHash = "transfer_txHash";
+        TransferParam[] memory transferParams = new TransferParam[](1);
+
+        // empty from address
+        transferParams[0] = TransferParam(
+            "",
+            toAddr,
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(0))
+        );
+        vm.expectRevert("Invalid address");
+        fundsHandler.submitTransferTask(transferParams);
+
+        // empty from address
+        transferParams[0] = TransferParam(
+            fromAddr,
+            "",
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(1))
+        );
+        vm.expectRevert("Invalid address");
+        fundsHandler.submitTransferTask(transferParams);
+
+        // below minimum amount
+        transferParams[0] = TransferParam(
+            fromAddr,
+            toAddr,
+            TICKER,
+            CHAIN_ID,
+            0,
+            bytes32(uint256(2))
+        );
+        vm.expectRevert("Invalid amount");
+        fundsHandler.submitTransferTask(transferParams);
+
+        // correct amount
+        transferParams[0] = TransferParam(
+            fromAddr,
+            toAddr,
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(3))
+        );
+        fundsHandler.submitTransferTask(transferParams);
+        console.log("fromAddr len", bytes(fromAddr).length);
+        taskOpts[0].initialCalldata = abi.encodeWithSelector(
+            fundsHandler.transfer.selector,
+            fromAddr,
+            toAddr,
+            TICKER,
+            CHAIN_ID,
+            amount,
+            bytes32(uint256(3)),
+            uint256(352) // offset for address
+        );
+        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
+        signature = _generateOptSignature(taskOpts, tssKey);
+
+        vm.expectEmit(true, true, true, true);
+        emit IFundsHandler.Transfer(TICKER, CHAIN_ID, fromAddr, toAddr, amount, txHash);
         entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();
     }

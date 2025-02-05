@@ -21,8 +21,24 @@ struct WithdrawalInfo {
     bytes32 salt;
 }
 
+struct TransferParam {
+    string fromAddress;
+    string toAddress;
+    bytes32 ticker;
+    uint64 chainId;
+    uint256 amount;
+    bytes32 salt;
+}
+
+struct ConsolidateTaskParam {
+    string fromAddress;
+    bytes32 ticker;
+    uint64 chainId;
+    uint256 amount;
+    bytes32 salt;
+}
+
 interface IFundsHandler {
-    event NewPauseState(bytes32 indexed condition, bool indexed newState);
     event RequestDeposit(uint64 taskId, DepositInfo depositInfo);
     event RequestWithdrawal(uint64 taskId, WithdrawalInfo withdrawalInfo);
     event DepositRecorded(
@@ -44,10 +60,27 @@ interface IFundsHandler {
         string txHash
     );
 
+    event RequestTransfer(uint64[] taskIds, TransferParam[] params);
+    event Transfer(
+        bytes32 indexed ticker,
+        uint64 indexed chainId,
+        string fromAddress,
+        string toAddress,
+        uint256 amount,
+        string txHash
+    );
+    event RequestConsolidate(uint64[] taskIds, ConsolidateTaskParam[] params);
+    event Consolidate(
+        bytes32 indexed ticker,
+        uint64 indexed chainId,
+        string fromAddress,
+        uint256 amount,
+        string txHash
+    );
+
     error InvalidAmount();
     error InvalidInput();
     error InvalidAddress();
-    error Paused();
 
     function recordDeposit(DepositInfo calldata _param) external returns (bytes memory);
 

@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {IAssetHandler, AssetParam, TransferParam, ConsolidateTaskParam, NudexAsset, Pair, PairState, PairType, TokenInfo} from "../interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, NudexAsset, Pair, PairState, PairType, TokenInfo} from "../interfaces/IAssetHandler.sol";
 import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
 
+    mapping(bytes32 pauseType => bool isPaused) public pauseState;
     // Mapping from asset identifiers to their details
     bytes32[] public assetTickerList;
     mapping(bytes32 ticker => NudexAsset) public nudexAssets;
     mapping(bytes32 ticker => uint64[] chainIds) public linkedTokenList;
     mapping(bytes32 ticker => mapping(uint64 chainId => TokenInfo)) public linkedTokens;
-    mapping(bytes32 ticker => mapping(uint64 chainId => ConsolidateTaskParam[]))
-        public consolidateRecords;
 
     Pair[] private pairs;
     mapping(bytes32 hashedPair => uint256 index) private assetPairIndex;
@@ -67,6 +66,32 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         uint64 _chainId
     ) external view returns (TokenInfo memory) {
         return linkedTokens[_ticker][_chainId];
+    }
+
+    function submitSetPauseState(
+        bytes32[] calldata _conditions,
+        bool[] calldata _newStates
+    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
+        require(_conditions.length == _newStates.length, "Mismatch data length");
+        taskIds = new uint64[](_conditions.length);
+        for (uint8 i; i < _conditions.length; i++) {
+            taskIds[i] = taskManager.submitTask(
+                msg.sender,
+                keccak256(
+                    abi.encodeWithSelector(
+                        this.setPauseState.selector,
+                        _conditions[i],
+                        _newStates[i]
+                    )
+                )
+            );
+        }
+    }
+
+    // TODO: role for adjusting Pause state
+    function setPauseState(bytes32 _condition, bool _newState) external onlyRole(ENTRYPOINT_ROLE) {
+        pauseState[_condition] = _newState;
+        emit NewPauseState(_condition, _newState);
     }
 
     // List a new asset
@@ -215,129 +240,11 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         emit TokenSwitch(_ticker, _chainId, _isActive);
     }
 
-    /**
-     * @dev Submit a task to transfer asset
-     * @param _params The task parameters
-     * bytes32 ticker The asset ticker
-     * uint64 chainId The chain id
-     * string fromAddress The address to transfer from
-     * string toAddress The address to transfer to
-     * uint256 amount The amount to transfer
-     */
-    function submitTransferTask(
-        TransferParam[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
-        taskIds = new uint64[](_params.length);
-        bytes32[] memory dataHash = new bytes32[](_params.length);
-        for (uint8 i; i < _params.length; i++) {
-            require(_params[i].amount > 0, "Invalid amount");
-            uint256 fromAddrLength = bytes(_params[i].fromAddress).length;
-            uint256 toAddrLength = bytes(_params[i].toAddress).length;
-            require(fromAddrLength > 0 && toAddrLength > 0, "Invalid address");
-
-            dataHash[i] = keccak256(
-                abi.encodeWithSelector(
-                    this.transfer.selector,
-                    _params[i].fromAddress,
-                    _params[i].toAddress,
-                    _params[i].ticker,
-                    _params[i].chainId,
-                    _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(352) +
-                        (32 * ((fromAddrLength - 1) / 32)) +
-                        (32 * ((toAddrLength - 1) / 32))
-                )
-            );
-        }
-        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
-        emit RequestTransfer(taskIds, _params);
-    }
-
-    /**
-     * @dev Transfer the asset
-     */
-    function transfer(
-        string calldata _fromAddress,
-        string calldata _toAddress,
-        bytes32 _ticker,
-        uint64 _chainId,
-        uint256 _amount,
-        bytes32 _salt,
-        string calldata _txHash
-    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
-        emit Transfer(_ticker, _chainId, _fromAddress, _toAddress, _amount, _txHash);
-    }
-
-    /**
-     * @dev Submit a task to consolidate the asset
-     * @param _params The task parameters
-     * address[] fromAddr The addresses to consolidate from
-     * bytes32 ticker The asset ticker
-     * uint64 chainId The chain id
-     * uint256 amount The amount to deposit
-     */
-    function submitConsolidateTask(
-        ConsolidateTaskParam[] calldata _params
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
-        taskIds = new uint64[](_params.length);
-        bytes32[] memory dataHash = new bytes32[](_params.length);
-        for (uint8 i; i < _params.length; i++) {
-            require(
-                _params[i].amount >= nudexAssets[_params[i].ticker].minDepositAmount,
-                "Invalid amount"
-            );
-            uint256 addrLength = bytes(_params[i].fromAddress).length;
-            require(addrLength > 0, "Invalid address");
-            dataHash[i] = keccak256(
-                abi.encodeWithSelector(
-                    this.consolidate.selector,
-                    _params[i].fromAddress,
-                    _params[i].ticker,
-                    _params[i].chainId,
-                    _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(256) + (32 * ((addrLength - 1) / 32))
-                )
-            );
-        }
-        taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
-        emit RequestConsolidate(taskIds, _params);
-    }
-
-    /**
-     * @dev Consolidate the token
-     */
-    function consolidate(
-        string calldata _fromAddress,
-        bytes32 _ticker,
-        uint64 _chainId,
-        uint256 _amount,
-        bytes32 _salt,
-        string calldata _txHash
-    ) external onlyRole(ENTRYPOINT_ROLE) checkListing(_ticker) {
-        consolidateRecords[_ticker][_chainId].push(
-            ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount, _salt)
-        );
-        emit Consolidate(_ticker, _chainId, _fromAddress, _amount, _txHash);
-    }
-
-    /**
-     * @dev Subtract balance from the token
-     * @param _ticker The asset ticker
-     * @param _chainId The chain id
-     * @param _amount The amount to withdraw
-     */
-    function withdraw(
-        bytes32 _ticker,
-        uint64 _chainId,
-        uint256 _amount
-    ) external onlyRole(FUNDS_ROLE) checkListing(_ticker) {
-        require(linkedTokens[_ticker][_chainId].isActive, "Inactive token");
-        emit Withdraw(_ticker, _chainId, _amount);
+    function isAssetAllowed(bytes32 _ticker, uint64 _chainId) external view returns (bool) {
+        return
+            nudexAssets[_ticker].isListed &&
+            linkedTokens[_ticker][_chainId].isActive &&
+            !pauseState[_ticker] &&
+            !pauseState[bytes32(uint256(_chainId))];
     }
 }

@@ -21,23 +21,6 @@ struct AssetParam {
     string assetAlias; // Common name of the asset
 }
 
-struct TransferParam {
-    string fromAddress;
-    string toAddress;
-    bytes32 ticker;
-    uint64 chainId;
-    uint256 amount;
-    bytes32 salt;
-}
-
-struct ConsolidateTaskParam {
-    string fromAddress;
-    bytes32 ticker;
-    uint64 chainId;
-    uint256 amount;
-    bytes32 salt;
-}
-
 struct NudexAsset {
     uint32 listIndex;
     uint8 decimals;
@@ -77,7 +60,7 @@ struct Pair {
 
 interface IAssetHandler {
     // events
-    event RequestUpdateAsset(uint64 taskId, bytes32 indexed ticker, bytes callData);
+    event NewPauseState(bytes32 indexed condition, bool indexed newState);
     event AssetListed(bytes32 indexed ticker, AssetParam assetParam);
     event AssetUpdated(bytes32 indexed ticker, AssetParam assetParam);
     event AssetDelisted(bytes32 indexed ticker);
@@ -89,23 +72,6 @@ interface IAssetHandler {
     event ResetLinkedToken(bytes32 indexed ticker);
     event TokenSwitch(bytes32 indexed ticker, uint64 indexed chainId, bool isActive);
 
-    event RequestTransfer(uint64[] taskIds, TransferParam[] params);
-    event Transfer(
-        bytes32 indexed ticker,
-        uint64 indexed chainId,
-        string fromAddress,
-        string toAddress,
-        uint256 amount,
-        string txHash
-    );
-    event RequestConsolidate(uint64[] taskIds, ConsolidateTaskParam[] params);
-    event Consolidate(
-        bytes32 indexed ticker,
-        uint64 indexed chainId,
-        string fromAddress,
-        uint256 amount,
-        string txHash
-    );
     event Withdraw(bytes32 indexed ticker, uint64 indexed chainId, uint256 amount);
 
     // errors
@@ -114,11 +80,11 @@ interface IAssetHandler {
     // Check if an asset is listed
     function isAssetListed(bytes32 _ticker) external view returns (bool);
 
+    function isAssetAllowed(bytes32 _ticker, uint64 _chainId) external view returns (bool);
+
     // Get the details of an asset
     function getAssetDetails(bytes32 _ticker) external view returns (NudexAsset memory);
 
     // Get the list of all listed assets
     function getAllAssets() external view returns (bytes32[] memory);
-
-    function withdraw(bytes32 _ticker, uint64 _chainId, uint256 _amount) external;
 }

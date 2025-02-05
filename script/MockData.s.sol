@@ -6,8 +6,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {NuvoProxy, ITransparentUpgradeableProxy} from "../src/proxies/NuvoProxy.sol";
 import {AccountHandlerUpgradeable} from "../src/handlers/AccountHandlerUpgradeable.sol";
-import {AssetHandlerUpgradeable, AssetParam, TokenInfo, ConsolidateTaskParam} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {FundsHandlerUpgradeable, DepositInfo, WithdrawalInfo} from "../src/handlers/FundsHandlerUpgradeable.sol";
+import {AssetHandlerUpgradeable, AssetParam, TokenInfo} from "../src/handlers/AssetHandlerUpgradeable.sol";
+import {FundsHandlerUpgradeable, DepositInfo, WithdrawalInfo, ConsolidateTaskParam} from "../src/handlers/FundsHandlerUpgradeable.sol";
 import {TaskManagerUpgradeable, State} from "../src/TaskManagerUpgradeable.sol";
 import {IAccountHandler, AddressCategory} from "../src/interfaces/IAccountHandler.sol";
 
@@ -95,55 +95,6 @@ contract MockData is Script {
         testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
         assetHandler.linkToken(TICKER, testTokenInfo);
 
-        // consolidate
-        ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
-        consolidateTaskParams[0] = ConsolidateTaskParam(
-            "fromAddr1",
-            TICKER,
-            CHAIN_ID,
-            1 ether,
-            bytes32(uint256(0))
-        );
-        consolidateTaskParams[1] = ConsolidateTaskParam(
-            "fromAddr2",
-            TICKER,
-            CHAIN_ID,
-            2.5 ether,
-            bytes32(uint256(1))
-        );
-        consolidateTaskParams[2] = ConsolidateTaskParam(
-            "fromAddr3",
-            TICKER,
-            CHAIN_ID,
-            3.3 ether,
-            bytes32(uint256(2))
-        );
-        assetHandler.submitConsolidateTask(consolidateTaskParams);
-        assetHandler.consolidate(
-            "fromAddr1",
-            TICKER,
-            CHAIN_ID,
-            1 ether,
-            bytes32(uint256(0)),
-            "consolidate txHash1"
-        );
-        assetHandler.consolidate(
-            "fromAddr2",
-            TICKER,
-            CHAIN_ID,
-            2.5 ether,
-            bytes32(uint256(1)),
-            "consolidate txHash2"
-        );
-        assetHandler.consolidate(
-            "fromAddr3",
-            TICKER,
-            CHAIN_ID,
-            3.3 ether,
-            bytes32(uint256(2)),
-            "consolidate txHash3"
-        );
-
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, false);
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, true);
     }
@@ -186,6 +137,55 @@ contract MockData is Script {
         // );
         // fundsHandler.setPauseState(_ticker, false);
         // fundsHandler.setPauseState(bytes32(uint256(_chainId)), false);
+
+        // consolidate
+        ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
+        consolidateTaskParams[0] = ConsolidateTaskParam(
+            "fromAddr1",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            bytes32(uint256(0))
+        );
+        consolidateTaskParams[1] = ConsolidateTaskParam(
+            "fromAddr2",
+            TICKER,
+            CHAIN_ID,
+            2.5 ether,
+            bytes32(uint256(1))
+        );
+        consolidateTaskParams[2] = ConsolidateTaskParam(
+            "fromAddr3",
+            TICKER,
+            CHAIN_ID,
+            3.3 ether,
+            bytes32(uint256(2))
+        );
+        fundsHandler.submitConsolidateTask(consolidateTaskParams);
+        fundsHandler.consolidate(
+            "fromAddr1",
+            TICKER,
+            CHAIN_ID,
+            1 ether,
+            bytes32(uint256(0)),
+            "consolidate txHash1"
+        );
+        fundsHandler.consolidate(
+            "fromAddr2",
+            TICKER,
+            CHAIN_ID,
+            2.5 ether,
+            bytes32(uint256(1)),
+            "consolidate txHash2"
+        );
+        fundsHandler.consolidate(
+            "fromAddr3",
+            TICKER,
+            CHAIN_ID,
+            3.3 ether,
+            bytes32(uint256(2)),
+            "consolidate txHash3"
+        );
     }
 
     function accountData() public {

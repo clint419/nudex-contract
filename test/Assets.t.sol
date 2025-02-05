@@ -4,7 +4,7 @@ import "./BaseTest.sol";
 import {TestHelper} from "./utils/TestHelper.sol";
 
 import {AssetHandlerUpgradeable} from "../src/handlers/AssetHandlerUpgradeable.sol";
-import {IAssetHandler, AssetParam, Pair, PairState, PairType, ConsolidateTaskParam, TransferParam, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
+import {IAssetHandler, AssetParam, Pair, PairState, PairType, TokenInfo} from "../src/interfaces/IAssetHandler.sol";
 import {ITaskManager, Task} from "../src/interfaces/ITaskManager.sol";
 
 contract AssetsTest is BaseTest {
@@ -145,144 +145,18 @@ contract AssetsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_Consolidate() public {
-        vm.startPrank(msgSender);
-        string memory fromAddr = "0xFromAddress";
-        uint256 amount = 1 ether;
-        string memory txHash = "consolidate_txHash";
-        ConsolidateTaskParam[] memory consolidateParams = new ConsolidateTaskParam[](1);
+    function test_Pause() public {
+        assertFalse(assetHandler.pauseState(TICKER));
+        // pause
+        bytes32[] memory conditions = new bytes32[](1);
+        conditions[0] = TICKER;
+        bool[] memory newStates = new bool[](1);
+        newStates[0] = true;
+        vm.prank(msgSender);
+        assetHandler.submitSetPauseState(conditions, newStates);
 
-        // empty from address
-        consolidateParams[0] = ConsolidateTaskParam(
-            "",
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(0))
-        );
-        vm.expectRevert("Invalid address");
-        assetHandler.submitConsolidateTask(consolidateParams);
-
-        // below minimum amount
-        consolidateParams[0] = ConsolidateTaskParam(
-            fromAddr,
-            TICKER,
-            CHAIN_ID,
-            0,
-            bytes32(uint256(0))
-        );
-        vm.expectRevert("Invalid amount");
-        assetHandler.submitConsolidateTask(consolidateParams);
-
-        // correct amount
-        consolidateParams[0] = ConsolidateTaskParam(
-            fromAddr,
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(0))
-        );
-        assetHandler.submitConsolidateTask(consolidateParams);
-        taskOpts[0].initialCalldata = abi.encodeWithSelector(
-            assetHandler.consolidate.selector,
-            fromAddr,
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(0)),
-            uint256(256) // offset for address
-        );
-        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
-        signature = _generateOptSignature(taskOpts, tssKey);
-
-        vm.expectEmit(true, true, true, true);
-        emit IAssetHandler.Consolidate(TICKER, CHAIN_ID, fromAddr, amount, txHash);
-        entryPoint.verifyAndCall(taskOpts, signature);
-        (
-            string memory tempAddr,
-            bytes32 tempTicker,
-            uint64 tempChainId,
-            uint256 tempAmount,
-
-        ) = assetHandler.consolidateRecords(TICKER, CHAIN_ID, 0);
-        assertEq(
-            abi.encode(tempAddr, tempTicker, tempChainId, tempAmount),
-            abi.encode(fromAddr, TICKER, CHAIN_ID, amount)
-        );
-        vm.stopPrank();
-    }
-
-    function test_Transfer() public {
-        vm.startPrank(msgSender);
-        string memory fromAddr = "0xFromAddress";
-        string memory toAddr = "0xToAddress";
-        uint256 amount = 1 ether;
-        string memory txHash = "transfer_txHash";
-        TransferParam[] memory transferParams = new TransferParam[](1);
-
-        // empty from address
-        transferParams[0] = TransferParam(
-            "",
-            toAddr,
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(0))
-        );
-        vm.expectRevert("Invalid address");
-        assetHandler.submitTransferTask(transferParams);
-
-        // empty from address
-        transferParams[0] = TransferParam(
-            fromAddr,
-            "",
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(1))
-        );
-        vm.expectRevert("Invalid address");
-        assetHandler.submitTransferTask(transferParams);
-
-        // below minimum amount
-        transferParams[0] = TransferParam(
-            fromAddr,
-            toAddr,
-            TICKER,
-            CHAIN_ID,
-            0,
-            bytes32(uint256(2))
-        );
-        vm.expectRevert("Invalid amount");
-        assetHandler.submitTransferTask(transferParams);
-
-        // correct amount
-        transferParams[0] = TransferParam(
-            fromAddr,
-            toAddr,
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(3))
-        );
-        assetHandler.submitTransferTask(transferParams);
-        console.log("fromAddr len", bytes(fromAddr).length);
-        taskOpts[0].initialCalldata = abi.encodeWithSelector(
-            assetHandler.transfer.selector,
-            fromAddr,
-            toAddr,
-            TICKER,
-            CHAIN_ID,
-            amount,
-            bytes32(uint256(3)),
-            uint256(352) // offset for address
-        );
-        taskOpts[0].extraData = TestHelper.getPaddedString(txHash);
-        signature = _generateOptSignature(taskOpts, tssKey);
-
-        vm.expectEmit(true, true, true, true);
-        emit IAssetHandler.Transfer(TICKER, CHAIN_ID, fromAddr, toAddr, amount, txHash);
-        entryPoint.verifyAndCall(taskOpts, signature);
-        vm.stopPrank();
+        vm.prank(entryPointProxy);
+        assetHandler.setPauseState(TICKER, true);
+        assertTrue(assetHandler.pauseState(TICKER));
     }
 }
