@@ -60,13 +60,14 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _newParticipant The new participant to be added.
      */
     function submitAddParticipantTask(
-        address _newParticipant
+        address _newParticipant,
+        bytes32 _salt
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64 taskId) {
         require(!isParticipant[_newParticipant], AlreadyParticipant(_newParticipant));
         require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
         taskId = taskManager.submitTask(
             msg.sender,
-            keccak256(abi.encodeWithSelector(this.addParticipant.selector, _newParticipant))
+            keccak256(abi.encodeWithSelector(this.addParticipant.selector, _newParticipant, _salt))
         );
         emit RequestAddParticipant(taskId, _newParticipant);
     }
@@ -76,7 +77,8 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _newParticipant The new participant to be added.
      */
     function addParticipant(
-        address _newParticipant
+        address _newParticipant,
+        bytes32
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(!isParticipant[_newParticipant], AlreadyParticipant(_newParticipant));
         require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
@@ -92,13 +94,14 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _participant The participant to be removed.
      */
     function submitRemoveParticipantTask(
-        address _participant
+        address _participant,
+        bytes32 _salt
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64 taskId) {
         require(participants.length > 3, NotEnoughParticipant());
         require(isParticipant[_participant], NotParticipant(_participant));
         taskId = taskManager.submitTask(
             msg.sender,
-            keccak256(abi.encodeWithSelector(this.removeParticipant.selector, _participant))
+            keccak256(abi.encodeWithSelector(this.removeParticipant.selector, _participant, _salt))
         );
         emit RequestRemoveParticipant(taskId, _participant);
     }
@@ -108,7 +111,8 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _participant The participant to be removed.
      */
     function removeParticipant(
-        address _participant
+        address _participant,
+        bytes32
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         require(participants.length > 3, NotEnoughParticipant());
         require(isParticipant[_participant], NotParticipant(_participant));
@@ -130,12 +134,15 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _newParticipants The new participant list.
      */
     function submitResetParticipantsTask(
-        address[] calldata _newParticipants
+        address[] calldata _newParticipants,
+        bytes32 _salt
     ) external onlyRole(SUBMITTER_ROLE) returns (uint64 taskId) {
         require(_newParticipants.length > 2, NotEnoughParticipant());
         taskId = taskManager.submitTask(
             msg.sender,
-            keccak256(abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants))
+            keccak256(
+                abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants, _salt)
+            )
         );
         emit RequestResetParticipants(taskId, _newParticipants);
     }
@@ -145,7 +152,8 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @param _newParticipants The new participant list.
      */
     function resetParticipants(
-        address[] calldata _newParticipants
+        address[] calldata _newParticipants,
+        bytes32
     ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
         // remove old participants
         for (uint8 i; i < participants.length; i++) {
