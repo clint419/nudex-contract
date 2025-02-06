@@ -82,7 +82,7 @@ interface IFundsHandler {
     error InvalidInput();
     error InvalidAddress();
 
-    function recordDeposit(DepositInfo calldata _param) external returns (bytes memory);
+    function recordDeposit(DepositInfo calldata _param) external;
 
     function recordWithdrawal(
         address _userAddress,
@@ -92,7 +92,7 @@ interface IFundsHandler {
         uint256 _amount,
         bytes32 _salt,
         string calldata _txHash
-    ) external returns (bytes memory);
+    ) external;
 
     function getDeposits(address depositAddress) external view returns (DepositInfo[] memory);
     function getWithdrawals(address depositAddress) external view returns (WithdrawalInfo[] memory);

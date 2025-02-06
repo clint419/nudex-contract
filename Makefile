@@ -14,7 +14,7 @@ deploy:
 	forge script --chain sepolia script/Deploy.s.sol:Deploy --rpc-url sepolia --broadcast --verify -vvvv
 
 deployTest:
-	forge script --chain 48816 script/DeployTest.s.sol:DeployTest --rpc-url goatTestnet --broadcast -vvvv --verify --verifier blockscout --verifier-url https://explorer.testnet3.goat.network/api/
+	forge script --rpc-url goatTestnet script/DeployTest.s.sol:DeployTest --broadcast -vvvv --verify --verifier blockscout --verifier-url https://explorer.testnet3.goat.network/api/
 
 deployDev:
 	forge script --rpc-url localhost script/DeployTest.s.sol:DeployTest --broadcast -vvvv
@@ -23,7 +23,7 @@ participantSetup:
 	forge script --rpc-url goatTestnet script/ParticipantSetup.s.sol:ParticipantSetup --broadcast -vvvv
 
 mockData:
-	forge script --rpc-url goatTestnet script/MockData.s.sol:MockData --broadcast -vvvv --verify 
+	forge script --rpc-url localhost script/MockData.s.sol:MockData --broadcast -vvvv
 
 .PHONY: abi
 abi:

@@ -100,12 +100,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
      */
     function recordDeposit(
         DepositInfo calldata _param
-    )
-        external
-        onlyRole(ENTRYPOINT_ROLE)
-        validateAsset(_param.ticker, _param.chainId)
-        returns (bytes memory)
-    {
+    ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_param.ticker, _param.chainId) {
         deposits[_param.userAddress].push(_param);
         emit INIP20.NIP20TokenEvent_mintb(_param.userAddress, _param.ticker, _param.amount);
         emit DepositRecorded(
@@ -118,7 +113,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             _param.blockHeight,
             _param.logIndex
         );
-        return abi.encode(uint8(1), _param);
     }
 
     /**
@@ -182,14 +176,13 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         uint256 _amount,
         bytes32 _salt,
         string calldata _txHash
-    ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_ticker, _chainId) returns (bytes memory) {
+    ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_ticker, _chainId) {
         withdrawals[_userAddress].push(
             WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount, _salt)
         );
         // TODO: transfer withdraw fee
         // emit INIP20.NIP20TokenEvent_mintb(adminAddress, _param.ticker, withdrawFee);
         emit WithdrawalRecorded(_userAddress, _ticker, _chainId, _toAddress, _amount, _txHash);
-        return abi.encode(uint8(1), _userAddress, _chainId, _ticker, _toAddress, _amount, _txHash);
     }
 
     /**

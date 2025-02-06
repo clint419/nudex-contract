@@ -16,6 +16,7 @@ contract MockData is Script {
     uint64 public constant CHAIN_ID = 0;
     bytes32 public constant TICKER = "TOKEN_TICKER_18";
     bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
+    bytes32 public constant ENTRYPOINT_ROLE = keccak256("ENTRYPOINT_ROLE");
 
     uint256 public deployerPrivateKey;
     address public deployer;
@@ -30,9 +31,18 @@ contract MockData is Script {
     function setUp() public {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.createWallet(deployerPrivateKey).addr;
+    }
 
+    function run() public {
         vm.startBroadcast(deployerPrivateKey);
+
         _setupContracts(true);
+
+        assetData();
+        // fundsData(0x4e554445585f555344435f313800000000000000000000000000000000000000, 59902);
+        accountData();
+        updateTask();
+
         vm.stopBroadcast();
     }
 
@@ -42,6 +52,11 @@ contract MockData is Script {
             accountHandler = AccountHandlerUpgradeable(vm.envAddress("ACCOUNT_HANDLER"));
             assetHandler = AssetHandlerUpgradeable(vm.envAddress("ASSET_HANDLER"));
             fundsHandler = FundsHandlerUpgradeable(vm.envAddress("FUNDS_HANDLER"));
+            // grant role to deployer
+            taskManager.grantRole(ENTRYPOINT_ROLE, deployer);
+            accountHandler.grantRole(ENTRYPOINT_ROLE, deployer);
+            assetHandler.grantRole(ENTRYPOINT_ROLE, deployer);
+            fundsHandler.grantRole(ENTRYPOINT_ROLE, deployer);
         } else {
             taskManager = new TaskManagerUpgradeable();
             console.log("|TaskManager|", address(taskManager));
@@ -74,17 +89,6 @@ contract MockData is Script {
             taskManager.initialize(deployer, deployer, handlers);
             console.log("Deployer address: ", deployer);
         }
-    }
-
-    function run() public {
-        vm.startBroadcast(deployerPrivateKey);
-
-        assetData();
-        fundsData(0x4e554445585f555344435f313800000000000000000000000000000000000000, 59902);
-        accountData();
-        updateTask();
-
-        vm.stopBroadcast();
     }
 
     function assetData() public {
@@ -194,30 +198,30 @@ contract MockData is Script {
     function accountData() public {
         for (uint8 i; i < 5; ++i) {
             accountHandler.registerNewAddress(
-                deployer,
+                makeAddr(Strings.toString(i)),
                 10001 + i,
                 AddressCategory.EVM,
-                i,
+                0,
                 Strings.toHexString(makeAddr(Strings.toString(i)))
             );
         }
 
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 1"),
             10001,
             AddressCategory.BTC,
             0,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR"
         );
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 2"),
             10002,
             AddressCategory.BTC,
             1,
             "1HkJEUpgptueutWRFB1bjHGKA5wtKBoToW"
         );
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 3"),
             10003,
             AddressCategory.BTC,
             2,
@@ -225,21 +229,21 @@ contract MockData is Script {
         );
 
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 1"),
             10001,
             AddressCategory.SOL,
             0,
             "w9A6215VdjCgX9BVwK1ZXE7sKBuNGh7bdmeGBEs7625"
         );
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 2"),
             10002,
             AddressCategory.SOL,
             1,
             "4WMARsRWo8x7oJRwTQ9LhbDuiAnzz5TF3WzpTCgACrfe"
         );
         accountHandler.registerNewAddress(
-            deployer,
+            makeAddr("address 3"),
             10003,
             AddressCategory.SOL,
             2,
