@@ -77,17 +77,13 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
      * @dev Add new participant.
      * @param _newParticipant The new participant to be added.
      */
-    function addParticipant(
-        address _newParticipant,
-        bytes32
-    ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+    function addParticipant(address _newParticipant, bytes32) external onlyRole(ENTRYPOINT_ROLE) {
         require(!isParticipant[_newParticipant], AlreadyParticipant(_newParticipant));
         require(nuvoLock.lockedBalanceOf(_newParticipant) > 0, NotEligible(_newParticipant));
         isParticipant[_newParticipant] = true;
         participants.push(_newParticipant);
 
         emit ParticipantAdded(_newParticipant);
-        return abi.encodePacked(uint8(1), _newParticipant);
     }
 
     /**
@@ -105,17 +101,13 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
             msg.sender,
             keccak256(abi.encodeWithSelector(this.removeParticipant.selector, _participant, _salt))
         );
-        emit RequestRemoveParticipant(taskId, _participant);
     }
 
     /**
      * @dev Remove participant.
      * @param _participant The participant to be removed.
      */
-    function removeParticipant(
-        address _participant,
-        bytes32
-    ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+    function removeParticipant(address _participant, bytes32) external onlyRole(ENTRYPOINT_ROLE) {
         require(participants.length > 3, NotEnoughParticipant());
         require(isParticipant[_participant], NotParticipant(_participant));
         isParticipant[_participant] = false;
@@ -128,7 +120,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         }
 
         emit ParticipantRemoved(_participant);
-        return abi.encodePacked(uint8(1), _participant);
     }
 
     /**
@@ -147,7 +138,6 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
                 abi.encodeWithSelector(this.resetParticipants.selector, _newParticipants, _salt)
             )
         );
-        emit RequestResetParticipants(taskId, _newParticipants);
     }
 
     /**
@@ -157,7 +147,7 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
     function resetParticipants(
         address[] calldata _newParticipants,
         bytes32
-    ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+    ) external onlyRole(ENTRYPOINT_ROLE) {
         // remove old participants
         for (uint8 i; i < participants.length; i++) {
             isParticipant[participants[i]] = false;
@@ -173,6 +163,5 @@ contract ParticipantHandlerUpgradeable is IParticipantHandler, HandlerBase {
         participants = _newParticipants;
 
         emit ParticipantsReset(_newParticipants);
-        return abi.encodePacked(uint8(1), _newParticipants);
     }
 }

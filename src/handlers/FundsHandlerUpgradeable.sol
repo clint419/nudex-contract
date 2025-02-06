@@ -103,16 +103,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_param.ticker, _param.chainId) {
         deposits[_param.userAddress].push(_param);
         emit INIP20.NIP20TokenEvent_mintb(_param.userAddress, _param.ticker, _param.amount);
-        emit DepositRecorded(
-            _param.userAddress,
-            _param.ticker,
-            _param.chainId,
-            _param.depositAddress,
-            _param.amount,
-            _param.txHash,
-            _param.blockHeight,
-            _param.logIndex
-        );
     }
 
     /**
@@ -144,8 +134,9 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
-            // uint256 withdrawFee = assetHandler.linkedTokens(_params[i].ticker, ).minWithdrawAmount;
             // TODO: withdraw fee
+            // uint256 withdrawFee = assetHandler.linkedTokens(_params[i].ticker, ).minWithdrawAmount;
+            // emit Fee(withdrawFee);
             // _params[i].amount -= fee;
             dataHash[i] = keccak256(
                 abi.encodeWithSelector(
@@ -182,7 +173,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         );
         // TODO: transfer withdraw fee
         // emit INIP20.NIP20TokenEvent_mintb(adminAddress, _param.ticker, withdrawFee);
-        emit WithdrawalRecorded(_userAddress, _ticker, _chainId, _toAddress, _amount, _txHash);
     }
 
     /**
@@ -223,7 +213,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             );
         }
         taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
-        emit RequestTransfer(taskIds, _params);
     }
 
     /**
@@ -277,7 +266,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             );
         }
         taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
-        emit RequestConsolidate(taskIds, _params);
     }
 
     /**
@@ -294,6 +282,5 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         consolidateRecords[_ticker][_chainId].push(
             ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount, _salt)
         );
-        emit Consolidate(_ticker, _chainId, _fromAddress, _amount, _txHash);
     }
 }

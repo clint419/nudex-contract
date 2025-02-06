@@ -54,5 +54,5 @@ interface IAccountHandler {
         AddressCategory _chain,
         uint32 _index,
         string calldata _address
-    ) external returns (bytes memory);
+    ) external;
 }

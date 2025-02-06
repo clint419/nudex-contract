@@ -16,9 +16,9 @@ interface IParticipantHandler {
 
     function isParticipant(address) external view returns (bool);
 
-    function addParticipant(address newParticipant, bytes32 _salt) external returns (bytes memory);
+    function addParticipant(address newParticipant, bytes32 _salt) external;
 
-    function removeParticipant(address participant, bytes32 _salt) external returns (bytes memory);
+    function removeParticipant(address participant, bytes32 _salt) external;
 
     function getParticipants() external view returns (address[] memory);
 

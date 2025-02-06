@@ -25,7 +25,7 @@ interface ITaskManager {
         bytes32 dataHash
     );
     event TaskSubmittedBatch(
-        uint64[] indexed taskIds,
+        uint64[] taskIds,
         address indexed submitter,
         address indexed handler,
         bytes32[] dataHashs

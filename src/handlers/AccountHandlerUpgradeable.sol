@@ -83,7 +83,6 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
             );
         }
         taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
-        emit RequestRegisterAddress(taskIds, _params);
     }
 
     /**
@@ -100,7 +99,7 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
         AddressCategory _chain,
         uint32 _index,
         string calldata _address
-    ) external onlyRole(ENTRYPOINT_ROLE) returns (bytes memory) {
+    ) external onlyRole(ENTRYPOINT_ROLE) {
         require(bytes(_address).length > 0, InvalidAddress());
         bytes32 hash = keccak256(abi.encodePacked(_account, _chain, _index));
         require(
@@ -120,7 +119,5 @@ contract AccountHandlerUpgradeable is IAccountHandler, HandlerBase {
 
         addressRecord[hash] = _address;
         userMapping[_address][_chain] = _userAddr;
-        emit AddressRegistered(_userAddr, _account, _chain, _index, _address);
-        return abi.encodePacked(uint8(1), _userAddr, _account, _chain, _index, _address);
     }
 }

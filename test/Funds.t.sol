@@ -97,15 +97,11 @@ contract FundsTest is BaseTest {
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.DepositRecorded(
-            msgSender,
-            TICKER,
-            CHAIN_ID,
-            DEPOSIT_ADDRESS,
-            DEFAULT_AMOUNT,
-            "txHash",
-            100,
-            0
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
         );
         entryPoint.verifyAndCall(taskOpts, signature);
 
@@ -138,15 +134,11 @@ contract FundsTest is BaseTest {
 
         // check event and result
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.DepositRecorded(
-            msgSender,
-            TICKER,
-            newChainId,
-            DEPOSIT_ADDRESS,
-            newAmount,
-            "txHash",
-            100,
-            0
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
         );
         entryPoint.verifyAndCall(taskOpts, signature);
         depositInfo = fundsHandler.getDeposit(msgSender, depositIndex);
@@ -260,15 +252,11 @@ contract FundsTest is BaseTest {
 
         // check event and result
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.DepositRecorded(
-            msgSender,
-            TICKER,
-            CHAIN_ID,
-            _depositAddress,
-            _amount,
-            "txHash",
-            100,
-            0
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
         );
         entryPoint.verifyAndCall(taskOpts, signature);
         DepositInfo memory depositInfo = fundsHandler.getDeposit(msgSender, depositIndex);
@@ -314,13 +302,11 @@ contract FundsTest is BaseTest {
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.WithdrawalRecorded(
-            msgSender,
-            TICKER,
-            CHAIN_ID,
-            DEPOSIT_ADDRESS,
-            DEFAULT_AMOUNT,
-            withdrawTxHash
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
         );
         entryPoint.verifyAndCall(taskOpts, signature);
         WithdrawalInfo memory withdrawInfo = fundsHandler.getWithdrawal(msgSender, withdrawIndex);
@@ -454,13 +440,11 @@ contract FundsTest is BaseTest {
         signature = _generateOptSignature(taskOpts, tssKey);
         // check event and result
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.WithdrawalRecorded(
-            msgSender,
-            TICKER,
-            CHAIN_ID,
-            _toAddress,
-            _amount,
-            _txHash
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
         );
         entryPoint.verifyAndCall(taskOpts, signature);
         vm.stopPrank();
@@ -517,7 +501,12 @@ contract FundsTest is BaseTest {
         signature = _generateOptSignature(taskOpts, tssKey);
 
         vm.expectEmit(true, true, true, true);
-        emit IFundsHandler.Consolidate(TICKER, CHAIN_ID, fromAddr, amount, txHash);
+        emit ITaskManager.TaskUpdated(
+            taskOpts[0].taskId,
+            address(fundsHandler),
+            State.Completed,
+            block.timestamp
+        );
         entryPoint.verifyAndCall(taskOpts, signature);
         (
             string memory tempAddr,
