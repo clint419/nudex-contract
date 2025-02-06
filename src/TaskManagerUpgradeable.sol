@@ -11,8 +11,8 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
 
     uint64 public nextTaskId;
     uint64 public nextCreatedTaskId;
-    mapping(uint64 => Task) public tasks;
-    mapping(bytes32 hash => bool) public taskHashes;
+    mapping(uint64 taskId => Task) public tasks;
+    mapping(bytes32 hash => uint64 taskId) public taskHashes;
 
     function initialize(
         address _owner,
@@ -24,6 +24,9 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         for (uint8 i; i < _taskHandlers.length; ++i) {
             _grantRole(HANDLER_ROLE, _taskHandlers[i]);
         }
+
+        nextTaskId = 1;
+        nextCreatedTaskId = 1;
     }
 
     function getTask(uint64 _taskId) external view returns (Task memory) {
@@ -75,7 +78,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         address _submitter,
         bytes32 _dataHash
     ) external onlyRole(HANDLER_ROLE) returns (uint64 taskId) {
-        require(!taskHashes[_dataHash], "Duplicate task");
+        require(taskHashes[_dataHash] == 0, "Duplicate task");
         taskId = nextTaskId++;
         tasks[taskId] = Task({
             state: State.Created,
@@ -85,7 +88,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
             updatedAt: uint32(0),
             dataHash: _dataHash
         });
-        taskHashes[_dataHash] = true;
+        taskHashes[_dataHash] = taskId;
 
         emit TaskSubmitted(taskId, _submitter, msg.sender, _dataHash);
     }
@@ -97,7 +100,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
         require(_dataHash.length <= MAX_BATCH_SIZE, "Exceed max batch size");
         taskIds = new uint64[](_dataHash.length);
         for (uint8 i; i < _dataHash.length; ++i) {
-            require(!taskHashes[_dataHash[i]], "Duplicate task");
+            require(taskHashes[_dataHash[i]] == 0, "Duplicate task");
             taskIds[i] = nextTaskId++;
             tasks[taskIds[i]] = Task({
                 state: State.Created,
@@ -107,7 +110,7 @@ contract TaskManagerUpgradeable is ITaskManager, AccessControlUpgradeable {
                 updatedAt: uint32(0),
                 dataHash: _dataHash[i]
             });
-            taskHashes[_dataHash[i]] = true;
+            taskHashes[_dataHash[i]] = taskIds[i];
         }
         emit TaskSubmittedBatch(taskIds, _submitter, msg.sender, _dataHash);
     }

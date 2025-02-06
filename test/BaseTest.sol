@@ -104,7 +104,7 @@ contract BaseTest is Test {
         );
 
         // misc
-        taskOpts.push(TaskOperation(0, State.Completed, "", ""));
+        taskOpts.push(TaskOperation(1, State.Completed, "", ""));
     }
 
     function _deployProxy(address _logic, address _admin) internal returns (address) {

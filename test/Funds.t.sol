@@ -199,7 +199,7 @@ contract FundsTest is BaseTest {
                 0
             );
             taskOperations[i] = TaskOperation(
-                i,
+                i + 1,
                 State.Pending,
                 abi.encodeWithSelector(
                     fundsHandler.recordDeposit.selector,
@@ -365,7 +365,7 @@ contract FundsTest is BaseTest {
                 bytes32(uint256(i))
             );
             taskOperations[i] = TaskOperation(
-                i,
+                i + 1,
                 State.Pending,
                 abi.encodeWithSelector(
                     fundsHandler.recordWithdrawal.selector,
