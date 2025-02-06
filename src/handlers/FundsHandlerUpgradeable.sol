@@ -5,8 +5,9 @@ import {HandlerBase} from "./HandlerBase.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
 import {IFundsHandler, DepositInfo, WithdrawalInfo, TransferParam, ConsolidateTaskParam} from "../interfaces/IFundsHandler.sol";
 import {INIP20} from "../interfaces/INIP20.sol";
-
+import {console} from "forge-std/console.sol";
 contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
+    address public immutable feeReceiver = address(0);
     IAssetHandler public immutable assetHandler;
 
     mapping(address userAddr => DepositInfo[]) public deposits;
@@ -134,10 +135,17 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
-            // TODO: withdraw fee
-            // uint256 withdrawFee = assetHandler.linkedTokens(_params[i].ticker, ).minWithdrawAmount;
-            // emit Fee(withdrawFee);
-            // _params[i].amount -= fee;
+            uint256 withdrawFee = assetHandler
+                .getLinkedToken(_params[i].ticker, _params[i].chainId)
+                .withdrawFee;
+            require(withdrawFee < _params[i].amount, "Insufficient balance to pay fee");
+            emit WithdrawFee(
+                _params[i].userAddress,
+                _params[i].chainId,
+                _params[i].ticker,
+                withdrawFee,
+                _params[i].salt
+            );
             dataHash[i] = keccak256(
                 abi.encodeWithSelector(
                     this.recordWithdrawal.selector,
@@ -145,11 +153,12 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].chainId,
                     _params[i].ticker,
                     _params[i].toAddress,
-                    _params[i].amount,
+                    _params[i].amount - withdrawFee,
+                    withdrawFee,
                     _params[i].salt,
                     // offset for txHash
                     // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(288) + (32 * ((addrLength - 1) / 32))
+                    uint256(320) + (32 * ((addrLength - 1) / 32))
                 )
             );
         }
@@ -165,14 +174,14 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         bytes32 _ticker,
         string calldata _toAddress,
         uint256 _amount,
+        uint256 _withdrawFee,
         bytes32 _salt,
         string calldata _txHash
     ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_ticker, _chainId) {
         withdrawals[_userAddress].push(
             WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount, _salt)
         );
-        // TODO: transfer withdraw fee
-        // emit INIP20.NIP20TokenEvent_mintb(adminAddress, _param.ticker, withdrawFee);
+        emit INIP20.NIP20TokenEvent_mintb(feeReceiver, _ticker, _withdrawFee);
     }
 
     /**

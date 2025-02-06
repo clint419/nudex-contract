@@ -17,6 +17,7 @@ contract FundsTest is BaseTest {
     uint256 public constant MIN_DEFAULT_AMOUNT = 50;
     uint256 public constant MIN_WITHDRAW_AMOUNT = 50;
     uint256 public constant DEFAULT_AMOUNT = 1 ether;
+    uint256 public constant WITHDRAW_FEE = 0.1 ether;
 
     AssetHandlerUpgradeable assetHandler;
     FundsHandlerUpgradeable public fundsHandler;
@@ -44,7 +45,14 @@ contract FundsTest is BaseTest {
         );
         assetHandler.listNewAsset(TICKER, assetParam);
         TokenInfo[] memory testTokenInfo = new TokenInfo[](1);
-        testTokenInfo[0] = TokenInfo(CHAIN_ID, true, uint8(18), "0xContractAddress", "SYMBOL", 0);
+        testTokenInfo[0] = TokenInfo(
+            CHAIN_ID,
+            true,
+            uint8(18),
+            "0xContractAddress",
+            "SYMBOL",
+            WITHDRAW_FEE
+        );
         assetHandler.linkToken(TICKER, testTokenInfo);
         // deploy fundsHandler
         address fundsHandlerProxy = _deployProxy(
@@ -289,9 +297,10 @@ contract FundsTest is BaseTest {
             withdrawTaskParams[0].chainId,
             withdrawTaskParams[0].ticker,
             withdrawTaskParams[0].toAddress,
-            withdrawTaskParams[0].amount,
+            withdrawTaskParams[0].amount - WITHDRAW_FEE,
+            WITHDRAW_FEE,
             withdrawTaskParams[0].salt,
-            uint256(288)
+            uint256(320)
         );
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);
@@ -311,7 +320,7 @@ contract FundsTest is BaseTest {
         entryPoint.verifyAndCall(taskOpts, signature);
         WithdrawalInfo memory withdrawInfo = fundsHandler.getWithdrawal(msgSender, withdrawIndex);
         assertEq(
-            abi.encodePacked(msgSender, CHAIN_ID, DEFAULT_AMOUNT),
+            abi.encodePacked(msgSender, CHAIN_ID, DEFAULT_AMOUNT - WITHDRAW_FEE),
             abi.encodePacked(withdrawInfo.userAddress, withdrawInfo.chainId, withdrawInfo.amount)
         );
         vm.stopPrank();
@@ -320,9 +329,14 @@ contract FundsTest is BaseTest {
     function test_WithdrawRevert() public {
         vm.startPrank(msgSender);
         // setup withdraw info
-        withdrawTaskParams[0].amount = 0; // invalid amount
         // fail case: invalid amount
+        withdrawTaskParams[0].amount = 0; // invalid amount
         vm.expectRevert(IFundsHandler.InvalidAmount.selector);
+        fundsHandler.submitWithdrawTask(withdrawTaskParams);
+
+        // fail case: not enough to pay withdraw fee
+        withdrawTaskParams[0].amount = WITHDRAW_FEE - 1; // invalid amount
+        vm.expectRevert("Insufficient balance to pay fee");
         fundsHandler.submitWithdrawTask(withdrawTaskParams);
 
         // fail case: invalid deposit address
@@ -359,9 +373,10 @@ contract FundsTest is BaseTest {
                     CHAIN_ID,
                     TICKER,
                     DEPOSIT_ADDRESS,
-                    amounts[i],
+                    amounts[i] - WITHDRAW_FEE,
+                    WITHDRAW_FEE,
                     bytes32(uint256(i)),
-                    uint256(288) + (32 * ((bytes(DEPOSIT_ADDRESS).length - 1) / 32))
+                    uint256(320) + (32 * ((bytes(DEPOSIT_ADDRESS).length - 1) / 32))
                 ),
                 ""
             );
@@ -392,7 +407,7 @@ contract FundsTest is BaseTest {
                 uint8(State.Completed)
             );
             withdrawalInfo = fundsHandler.getWithdrawal(msgSender, i);
-            assertEq(amounts[i], withdrawalInfo.amount);
+            assertEq(withdrawalInfo.amount, amounts[i] - WITHDRAW_FEE);
         }
         vm.stopPrank();
     }
@@ -406,6 +421,7 @@ contract FundsTest is BaseTest {
         vm.startPrank(msgSender);
         vm.assume(bytes(_toAddress).length > 0);
         vm.assume(_amount > MIN_DEFAULT_AMOUNT);
+        vm.assume(_amount > WITHDRAW_FEE);
         vm.assume(bytes(_txHash).length > 0);
         // setup withdrawal info
         WithdrawalInfo[] memory tempWithdrawTaskParams = new WithdrawalInfo[](1);
@@ -427,9 +443,10 @@ contract FundsTest is BaseTest {
             CHAIN_ID,
             TICKER,
             _toAddress,
-            _amount,
+            _amount - WITHDRAW_FEE,
+            WITHDRAW_FEE,
             _salt,
-            uint256(288) + (32 * ((bytes(_toAddress).length - 1) / 32))
+            uint256(320) + (32 * ((bytes(_toAddress).length - 1) / 32))
         );
         signature = _generateOptSignature(taskOpts, tssKey);
         entryPoint.verifyAndCall(taskOpts, signature);

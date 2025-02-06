@@ -141,6 +141,7 @@ contract MockData is Script {
             _ticker,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             1 ether,
+            0.1 ether,
             bytes32(uint256(0)),
             "TxHash"
         );

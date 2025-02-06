@@ -59,6 +59,13 @@ interface IFundsHandler {
         uint256 amount,
         string txHash
     );
+    event WithdrawFee(
+        address indexed userAddress,
+        uint64 indexed chainId,
+        bytes32 indexed ticker,
+        uint256 feeAmount,
+        bytes32 salt
+    );
 
     event RequestTransfer(uint64[] taskIds, TransferParam[] params);
     event Transfer(
@@ -90,6 +97,7 @@ interface IFundsHandler {
         bytes32 _ticker,
         string calldata _toAddress,
         uint256 _amount,
+        uint256 _withdrawFee,
         bytes32 _salt,
         string calldata _txHash
     ) external;
