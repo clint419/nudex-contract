@@ -91,7 +91,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             dataHash[i] = keccak256(
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
-            emit RequestDeposit(taskIds[i], _params[i]);
         }
         taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
     }
@@ -151,6 +150,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                 _params[i].ticker,
                 _params[i].amount
             );
+            // uint256 withdrawFee = assetHandler.linkedTokens(_params[i].ticker, ).minWithdrawAmount;
             // TODO: withdraw fee
             // _params[i].amount -= fee;
             dataHash[i] = keccak256(
@@ -167,7 +167,6 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     uint256(288) + (32 * ((addrLength - 1) / 32))
                 )
             );
-            emit RequestWithdrawal(taskIds[i], _params[i]);
         }
         taskIds = taskManager.submitTaskBatch(msg.sender, dataHash);
     }

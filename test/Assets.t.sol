@@ -131,7 +131,7 @@ contract AssetsTest is BaseTest {
         assertFalse(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);
 
         // unlink tokens
-        assetHandler.resetlinkedToken(TICKER);
+        assetHandler.resetLinkedToken(TICKER);
         signature = _generateOptSignature(taskOpts, tssKey);
         assertFalse(assetHandler.getLinkedToken(TICKER, CHAIN_ID).isActive);
 

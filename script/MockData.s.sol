@@ -97,6 +97,10 @@ contract MockData is Script {
 
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, false);
         assetHandler.tokenSwitch(TICKER, CHAIN_ID, true);
+
+        // pause
+        assetHandler.setPauseState(TICKER, false);
+        assetHandler.setPauseState(bytes32(uint256(CHAIN_ID)), false);
     }
 
     function fundsData(bytes32 _ticker, uint64 _chainId) public {
@@ -133,12 +137,9 @@ contract MockData is Script {
             _ticker,
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             1 ether,
+            bytes32(uint256(0)),
             "TxHash"
         );
-
-        // pause
-        fundsHandler.setPauseState(_ticker, false);
-        fundsHandler.setPauseState(bytes32(uint256(_chainId)), false);
 
         // consolidate
         ConsolidateTaskParam[] memory consolidateTaskParams = new ConsolidateTaskParam[](3);
