@@ -147,15 +147,7 @@ contract AssetsTest is BaseTest {
 
     function test_Pause() public {
         assertFalse(assetHandler.pauseState(TICKER));
-        // pause
-        bytes32[] memory conditions = new bytes32[](1);
-        conditions[0] = TICKER;
-        bool[] memory newStates = new bool[](1);
-        newStates[0] = true;
-        vm.prank(msgSender);
-        assetHandler.submitSetPauseState(conditions, newStates);
-
-        vm.prank(entryPointProxy);
+        vm.prank(daoContract);
         assetHandler.setPauseState(TICKER, true);
         assertTrue(assetHandler.pauseState(TICKER));
     }

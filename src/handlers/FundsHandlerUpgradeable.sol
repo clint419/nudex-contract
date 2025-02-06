@@ -5,7 +5,7 @@ import {HandlerBase} from "./HandlerBase.sol";
 import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
 import {IFundsHandler, DepositInfo, WithdrawalInfo, TransferParam, ConsolidateTaskParam} from "../interfaces/IFundsHandler.sol";
 import {INIP20} from "../interfaces/INIP20.sol";
-import {console} from "forge-std/console.sol";
+// import {console} from "forge-std/console.sol";
 contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
     address public immutable feeReceiver = address(0);
     IAssetHandler public immutable assetHandler;
@@ -86,9 +86,9 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             require(
                 _params[i].amount >=
                     assetHandler.getAssetDetails(_params[i].ticker).minDepositAmount,
-                InvalidAmount()
+                "Invalid amount"
             );
-            require(bytes(_params[i].depositAddress).length > 0, InvalidAddress());
+            require(bytes(_params[i].depositAddress).length > 0, "Invalid address");
             dataHash[i] = keccak256(
                 abi.encodeWithSelector(this.recordDeposit.selector, _params[i])
             );
@@ -126,19 +126,20 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
             require(
                 _params[i].amount >=
                     assetHandler.getAssetDetails(_params[i].ticker).minWithdrawAmount,
-                InvalidAmount()
+                "Invalid amount"
             );
             uint256 addrLength = bytes(_params[i].toAddress).length;
-            require(addrLength > 0, InvalidAddress());
+            require(addrLength > 0, "Invalid address");
+            uint256 withdrawFee = assetHandler
+                .getLinkedToken(_params[i].ticker, _params[i].chainId)
+                .withdrawFee;
+            require(withdrawFee < _params[i].amount, "Insufficient balance to pay fee");
+            // remove asset from user's account
             emit INIP20.NIP20TokenEvent_burnb(
                 _params[i].userAddress,
                 _params[i].ticker,
                 _params[i].amount
             );
-            uint256 withdrawFee = assetHandler
-                .getLinkedToken(_params[i].ticker, _params[i].chainId)
-                .withdrawFee;
-            require(withdrawFee < _params[i].amount, "Insufficient balance to pay fee");
             emit WithdrawFee(
                 _params[i].userAddress,
                 _params[i].chainId,

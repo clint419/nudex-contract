@@ -166,13 +166,13 @@ contract FundsTest is BaseTest {
         vm.startPrank(msgSender);
         depositTaskParams[0].amount = 0; // invalid amount
         // fail case: invalid amount
-        vm.expectRevert(IFundsHandler.InvalidAmount.selector);
+        vm.expectRevert("Invalid amount");
         fundsHandler.submitDepositTask(depositTaskParams);
 
         // fail case: invalid user address
         depositTaskParams[0].amount = 1 ether;
         depositTaskParams[0].depositAddress = "";
-        vm.expectRevert(IFundsHandler.InvalidAddress.selector);
+        vm.expectRevert("Invalid address");
         fundsHandler.submitDepositTask(depositTaskParams);
         vm.stopPrank();
     }
@@ -331,7 +331,7 @@ contract FundsTest is BaseTest {
         // setup withdraw info
         // fail case: invalid amount
         withdrawTaskParams[0].amount = 0; // invalid amount
-        vm.expectRevert(IFundsHandler.InvalidAmount.selector);
+        vm.expectRevert("Invalid amount");
         fundsHandler.submitWithdrawTask(withdrawTaskParams);
 
         // fail case: not enough to pay withdraw fee
@@ -342,7 +342,7 @@ contract FundsTest is BaseTest {
         // fail case: invalid deposit address
         withdrawTaskParams[0].amount = 1 ether;
         withdrawTaskParams[0].toAddress = "";
-        vm.expectRevert(IFundsHandler.InvalidAddress.selector);
+        vm.expectRevert("Invalid address");
         fundsHandler.submitWithdrawTask(withdrawTaskParams);
         vm.stopPrank();
     }

@@ -6,7 +6,6 @@ import {HandlerBase} from "./HandlerBase.sol";
 
 contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-    bytes32 public constant FUNDS_ROLE = keccak256("FUNDS_ROLE");
 
     mapping(bytes32 pauseType => bool isPaused) public pauseState;
     // Mapping from asset identifiers to their details
@@ -77,28 +76,7 @@ contract AssetHandlerUpgradeable is IAssetHandler, HandlerBase {
         return linkedTokens[_ticker][_chainId];
     }
 
-    function submitSetPauseState(
-        bytes32[] calldata _conditions,
-        bool[] calldata _newStates
-    ) external onlyRole(SUBMITTER_ROLE) returns (uint64[] memory taskIds) {
-        require(_conditions.length == _newStates.length, "Mismatch data length");
-        taskIds = new uint64[](_conditions.length);
-        for (uint8 i; i < _conditions.length; i++) {
-            taskIds[i] = taskManager.submitTask(
-                msg.sender,
-                keccak256(
-                    abi.encodeWithSelector(
-                        this.setPauseState.selector,
-                        _conditions[i],
-                        _newStates[i]
-                    )
-                )
-            );
-        }
-    }
-
-    // TODO: role for adjusting Pause state
-    function setPauseState(bytes32 _condition, bool _newState) external onlyRole(ENTRYPOINT_ROLE) {
+    function setPauseState(bytes32 _condition, bool _newState) external onlyRole(DAO_ROLE) {
         pauseState[_condition] = _newState;
         emit NewPauseState(_condition, _newState);
     }
