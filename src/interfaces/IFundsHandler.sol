@@ -98,8 +98,7 @@ interface IFundsHandler {
         string calldata _toAddress,
         uint256 _amount,
         uint256 _withdrawFee,
-        bytes32 _salt,
-        string calldata _txHash
+        bytes32 _salt
     ) external;
 
     function getDeposits(address depositAddress) external view returns (DepositInfo[] memory);

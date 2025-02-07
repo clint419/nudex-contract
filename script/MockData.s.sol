@@ -142,8 +142,7 @@ contract MockData is Script {
             "124wd5urvxo4H3naXR6QACP1MGVpLeikeR",
             1 ether,
             0.1 ether,
-            bytes32(uint256(0)),
-            "TxHash"
+            bytes32(uint256(0))
         );
 
         // consolidate
@@ -175,24 +174,21 @@ contract MockData is Script {
             TICKER,
             CHAIN_ID,
             1 ether,
-            bytes32(uint256(0)),
-            "consolidate txHash1"
+            bytes32(uint256(0))
         );
         fundsHandler.consolidate(
             "fromAddr2",
             TICKER,
             CHAIN_ID,
             2.5 ether,
-            bytes32(uint256(1)),
-            "consolidate txHash2"
+            bytes32(uint256(1))
         );
         fundsHandler.consolidate(
             "fromAddr3",
             TICKER,
             CHAIN_ID,
             3.3 ether,
-            bytes32(uint256(2)),
-            "consolidate txHash3"
+            bytes32(uint256(2))
         );
     }
 

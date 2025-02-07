@@ -156,10 +156,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].toAddress,
                     _params[i].amount - withdrawFee,
                     withdrawFee,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(320) + (32 * ((addrLength - 1) / 32))
+                    _params[i].salt
                 )
             );
         }
@@ -176,8 +173,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         string calldata _toAddress,
         uint256 _amount,
         uint256 _withdrawFee,
-        bytes32 _salt,
-        string calldata _txHash
+        bytes32 _salt
     ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_ticker, _chainId) {
         withdrawals[_userAddress].push(
             WithdrawalInfo(_userAddress, _chainId, _ticker, _toAddress, _amount, _salt)
@@ -213,12 +209,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(352) +
-                        (32 * ((fromAddrLength - 1) / 32)) +
-                        (32 * ((toAddrLength - 1) / 32))
+                    _params[i].salt
                 )
             );
         }
@@ -268,10 +259,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
                     _params[i].ticker,
                     _params[i].chainId,
                     _params[i].amount,
-                    _params[i].salt,
-                    // offset for txHash
-                    // @dev "-1" if it is exact 32 bytes it does not take one extra slot
-                    uint256(256) + (32 * ((addrLength - 1) / 32))
+                    _params[i].salt
                 )
             );
         }
@@ -286,8 +274,7 @@ contract FundsHandlerUpgradeable is IFundsHandler, HandlerBase {
         bytes32 _ticker,
         uint64 _chainId,
         uint256 _amount,
-        bytes32 _salt,
-        string calldata _txHash
+        bytes32 _salt
     ) external onlyRole(ENTRYPOINT_ROLE) validateAsset(_ticker, _chainId) {
         consolidateRecords[_ticker][_chainId].push(
             ConsolidateTaskParam(_fromAddress, _ticker, _chainId, _amount, _salt)
